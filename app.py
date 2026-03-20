@@ -96,10 +96,123 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# ─── LOGIN CSS ─────────────────────────────────────────────────────────────────
+LOGIN_CSS = """
+<style>
+.login-wrap {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 80vh;
+}
+.login-box {
+  background: linear-gradient(145deg, #0d1225, #111827);
+  border: 1px solid #1e2a45;
+  border-radius: 24px;
+  padding: 48px 44px 40px;
+  width: 100%; max-width: 420px;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.6), 0 0 0 1px #ffffff08;
+}
+.login-logo {
+  font-family: 'Space Mono', monospace;
+  font-size: 32px; font-weight: 700; text-align: center;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6, #06b6d4);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; margin-bottom: 4px;
+}
+.login-sub {
+  text-align: center; color: #4b5a75;
+  font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
+  margin-bottom: 36px;
+}
+.login-label {
+  color: #6b7a99; font-size: 12px; text-transform: uppercase;
+  letter-spacing: 1px; margin-bottom: 6px; display: block;
+}
+.login-err {
+  background: #450a0a; border: 1px solid #dc2626;
+  color: #f87171; border-radius: 10px; padding: 10px 14px;
+  font-size: 13px; margin-top: 12px; text-align: center;
+}
+.login-footer {
+  text-align: center; color: #2d3f5e; font-size: 11px; margin-top: 24px;
+}
+.login-dot {
+  display: inline-block; width: 6px; height: 6px;
+  border-radius: 50%; background: #22c55e;
+  margin-right: 6px; animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%,100%{opacity:1;transform:scale(1)}
+  50%{opacity:0.5;transform:scale(1.3)}
+}
+</style>
+"""
+
 # ─── SESSION STATE ──────────────────────────────────────────────────────────────
-for key, default in [("portfolio",[]),("alerts",[]),("gemini_key","")]:
+for key, default in [("portfolio",[]),("alerts",[]),("gemini_key",""),
+                     ("logged_in", False), ("username", "")]:
     if key not in st.session_state:
         st.session_state[key] = default
+
+# Secrets'tan Gemini key oku
+if not st.session_state.gemini_key:
+    try:
+        st.session_state.gemini_key = st.secrets["GEMINI_API_KEY"]
+    except:
+        pass
+
+# ─── LOGIN FONKSİYONU ──────────────────────────────────────────────────────────
+def check_login(username: str, password: str) -> bool:
+    try:
+        users = st.secrets["users"]
+        return users.get(username) == password
+    except:
+        # Secrets yoksa (local test) varsayılan kullanıcı
+        return username == "admin" and password == "borsa2024"
+
+def show_login():
+    st.markdown(LOGIN_CSS, unsafe_allow_html=True)
+    st.markdown('<div class="login-wrap">', unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.markdown("""
+        <div class="login-box">
+          <div class="login-logo">📈 BorsaRobot</div>
+          <div class="login-sub">AI · Powered Trading Platform</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown('<span class="login-label">Kullanıcı Adı</span>', unsafe_allow_html=True)
+        username = st.text_input("", placeholder="kullanıcı adınız",
+                                  key="login_user", label_visibility="collapsed")
+
+        st.markdown('<span class="login-label">Şifre</span>', unsafe_allow_html=True)
+        password = st.text_input("", placeholder="••••••••",
+                                  type="password", key="login_pass",
+                                  label_visibility="collapsed")
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("Giriş Yap →", use_container_width=True, key="login_btn"):
+            if check_login(username, password):
+                st.session_state.logged_in = True
+                st.session_state.username  = username
+                st.rerun()
+            else:
+                st.markdown('<div class="login-err">❌ Kullanıcı adı veya şifre hatalı</div>',
+                            unsafe_allow_html=True)
+
+        st.markdown("""
+        <div class="login-footer">
+          <span class="login-dot"></span>Güvenli bağlantı · BorsaRobot AI v2.0
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# ─── GİRİŞ KONTROLÜ ───────────────────────────────────────────────────────────
+if not st.session_state.logged_in:
+    show_login()
+    st.stop()
 
 # ─── VERİ FONKSİYONLARI ────────────────────────────────────────────────────────
 
@@ -564,15 +677,26 @@ with st.sidebar:
     st.markdown('<div class="main-header">📈 BorsaRobot</div>', unsafe_allow_html=True)
     st.markdown('<div class="sub-header">Gemini AI · Yahoo Finance</div>', unsafe_allow_html=True)
 
-    st.markdown("#### 🔑 Gemini API Key")
-    gemini_key = st.text_input("", type="password",
-                                value=st.session_state.gemini_key,
-                                placeholder="AIza...", label_visibility="collapsed")
-    if gemini_key:
-        st.session_state.gemini_key = gemini_key
-        st.success("✓ API key hazır", icon="✅")
-    else:
-        st.caption("🔗 [Ücretsiz API al → aistudio.google.com](https://aistudio.google.com/app/apikey)")
+    # Kullanıcı bilgisi
+    st.markdown(f"""
+    <div style="background:#0d1225;border:1px solid #1e2a45;border-radius:10px;padding:10px 14px;margin-bottom:16px;display:flex;align-items:center;gap:10px">
+      <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:white;flex-shrink:0">
+        {st.session_state.username[0].upper()}
+      </div>
+      <div>
+        <div style="font-size:13px;font-weight:600;color:#e0e6f0">{st.session_state.username}</div>
+        <div style="font-size:10px;color:#4b5a75;display:flex;align-items:center;gap:4px">
+          <span style="width:6px;height:6px;border-radius:50%;background:#22c55e;display:inline-block"></span>
+          Oturum açık
+        </div>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    if st.button("🚪 Çıkış Yap", use_container_width=True):
+        st.session_state.logged_in = False
+        st.session_state.username  = ""
+        st.rerun()
 
     st.divider()
 
@@ -750,50 +874,47 @@ with tab2:
     st.markdown('<div class="gemini-badge">✦ Powered by Google Gemini 2.0 Flash</div>', unsafe_allow_html=True)
     st.markdown("### 🤖 Yapay Zeka Teknik Analiz")
 
-    if not st.session_state.gemini_key:
-        st.warning("⚠️ Sol menüden **Gemini API Key** girin.\n\n🔗 Ücretsiz almak için: https://aistudio.google.com/app/apikey")
-    else:
-        c_a, c_b, c_c = st.columns([2.5, 1, 1])
-        with c_a:
-            ai_ticker = st.text_input("Analiz Edilecek Sembol", value=ticker_input,
-                                       placeholder="AAPL, THYAO.IS, BTC-USD...").upper().strip()
-        with c_b:
-            ai_period = st.selectbox("Dönem", ["1mo","3mo","6mo","1y"], index=1, key="ai_period")
-        with c_c:
-            st.markdown("<br>", unsafe_allow_html=True)
-            analyze_btn = st.button("🔍 Analiz Et", use_container_width=True)
+    c_a, c_b, c_c = st.columns([2.5, 1, 1])
+    with c_a:
+        ai_ticker = st.text_input("Analiz Edilecek Sembol", value=ticker_input,
+                                   placeholder="AAPL, THYAO.IS, BTC-USD...").upper().strip()
+    with c_b:
+        ai_period = st.selectbox("Dönem", ["1mo","3mo","6mo","1y"], index=1, key="ai_period")
+    with c_c:
+        st.markdown("<br>", unsafe_allow_html=True)
+        analyze_btn = st.button("🔍 Analiz Et", use_container_width=True)
 
-        if analyze_btn and ai_ticker:
-            with st.spinner("🤖 Gemini analiz yapıyor... (~10-15 saniye)"):
-                try:
-                    df_ai = get_stock_data(ai_ticker, ai_period, "1d")
-                    if df_ai.empty:
-                        st.error("Veri alınamadı.")
-                    else:
-                        df_ai   = calculate_indicators(df_ai)
-                        sigs_ai = generate_signals(df_ai)
-                        al_ai, sat_ai, neu_ai, score_ai = compute_score(sigs_ai)
-                        info_ai = get_ticker_info(ai_ticker)
-                        result  = ai_analyze_gemini(ai_ticker, df_ai, info_ai, sigs_ai,
-                                                    al_ai, sat_ai, neu_ai, score_ai,
-                                                    st.session_state.gemini_key)
-                        st.markdown(f'<div class="ai-response">{result}</div>', unsafe_allow_html=True)
-                except Exception as e:
-                    st.error(f"Gemini hatası: {e}")
+    if analyze_btn and ai_ticker:
+        with st.spinner("🤖 Gemini analiz yapıyor... (~10-15 saniye)"):
+            try:
+                df_ai = get_stock_data(ai_ticker, ai_period, "1d")
+                if df_ai.empty:
+                    st.error("Veri alınamadı.")
+                else:
+                    df_ai   = calculate_indicators(df_ai)
+                    sigs_ai = generate_signals(df_ai)
+                    al_ai, sat_ai, neu_ai, score_ai = compute_score(sigs_ai)
+                    info_ai = get_ticker_info(ai_ticker)
+                    result  = ai_analyze_gemini(ai_ticker, df_ai, info_ai, sigs_ai,
+                                                al_ai, sat_ai, neu_ai, score_ai,
+                                                st.session_state.gemini_key)
+                    st.markdown(f'<div class="ai-response">{result}</div>', unsafe_allow_html=True)
+            except Exception as e:
+                st.error(f"Gemini hatası: {e}")
 
-        st.markdown("---")
-        st.markdown("### 💬 Serbest Borsa Sorusu")
-        custom_q = st.text_area("", placeholder="Örn: THYAO.IS'de golden cross oluştu mu? RSI ve MACD birlikte AL sinyali veriyor mu? Bollinger sıkışması var mı?", height=90, label_visibility="collapsed")
-        if st.button("Gönder 🚀") and custom_q and st.session_state.gemini_key:
-            with st.spinner("Yanıt üretiliyor..."):
-                try:
-                    genai.configure(api_key=st.session_state.gemini_key)
-                    model = genai.GenerativeModel(
-                        model_name="gemini-2.0-flash",
-                        system_instruction="Sen uzman bir borsa analisti ve teknik analiz uzmanısın. Türkçe, net ve somut yanıt ver. Her zaman 'yatırım tavsiyesi değildir' notunu ekle."
-                    )
-                    resp = model.generate_content(custom_q)
-                    st.markdown(f'<div class="ai-response">{resp.text}</div>', unsafe_allow_html=True)
+    st.markdown("---")
+    st.markdown("### 💬 Serbest Borsa Sorusu")
+    custom_q = st.text_area("", placeholder="Örn: THYAO.IS'de golden cross oluştu mu? RSI ve MACD birlikte AL sinyali veriyor mu? Bollinger sıkışması var mı?", height=90, label_visibility="collapsed")
+    if st.button("Gönder 🚀") and custom_q:
+        with st.spinner("Yanıt üretiliyor..."):
+            try:
+                genai.configure(api_key=st.session_state.gemini_key)
+                model = genai.GenerativeModel(
+                    model_name="gemini-2.0-flash",
+                    system_instruction="Sen uzman bir borsa analisti ve teknik analiz uzmanısın. Türkçe, net ve somut yanıt ver. Her zaman 'yatırım tavsiyesi değildir' notunu ekle."
+                )
+                resp = model.generate_content(custom_q)
+                st.markdown(f'<div class="ai-response">{resp.text}</div>', unsafe_allow_html=True)
                 except Exception as e:
                     st.error(f"Hata: {e}")
 
