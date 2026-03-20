@@ -322,20 +322,33 @@ def resolve_ticker(raw: str) -> str:
     # Yahoo Finance'de direkt dene, bulamazsa .IS ile dene
     return t
 
+def _download(ticker: str, period: str, interval: str) -> pd.DataFrame:
+    """Tek ticker için yfinance download, sütunları düzeltir."""
+    try:
+        df = yf.download(ticker, period=period, interval=interval,
+                         progress=False, auto_adjust=True, actions=False)
+        if df.empty:
+            return pd.DataFrame()
+        if isinstance(df.columns, pd.MultiIndex):
+            df.columns = df.columns.get_level_values(0)
+        needed = [c for c in ["Open","High","Low","Close","Volume"] if c in df.columns]
+        if len(needed) < 5:
+            return pd.DataFrame()
+        return df[needed].dropna()
+    except:
+        return pd.DataFrame()
+
 @st.cache_data(ttl=60)
 def get_stock_data(ticker: str, period: str, interval: str) -> pd.DataFrame:
-    # Önce direkt dene, boşsa .IS ekleyerek tekrar dene
-    for t in [ticker, ticker + ".IS"] if "." not in ticker else [ticker]:
-        try:
-            df = yf.download(t, period=period, interval=interval, progress=False, auto_adjust=True)
-            if not df.empty:
-                if isinstance(df.columns, pd.MultiIndex):
-                    df.columns = df.columns.get_level_values(0)
-                df = df[["Open","High","Low","Close","Volume"]].dropna()
-                if not df.empty:
-                    return df
-        except:
-            continue
+    """Ticker'ı dener; bulamazsa .IS ekleyerek tekrar dener."""
+    df = _download(ticker, period, interval)
+    if not df.empty:
+        return df
+    # .IS ekleyerek tekrar dene (BIST)
+    if "." not in ticker and "=" not in ticker and "-" not in ticker:
+        df2 = _download(ticker + ".IS", period, interval)
+        if not df2.empty:
+            return df2
     return pd.DataFrame()
 
 @st.cache_data(ttl=60)
@@ -899,7 +912,7 @@ with st.sidebar:
             st.success("✓ Alarm eklendi")
 
 # ─── ANA İÇERİK ────────────────────────────────────────────────────────────────
-tab1, tab2, tab3, tab4 = st.tabs(["📈 Grafik & Sinyaller","🤖 Gemini AI Analiz","💼 Portföy","🔔 Alarmlar"])
+tab1, tab2, tab3, tab4 = st.tabs(["📈 Grafik & Sinyaller","🤖 Groq AI Analiz","💼 Portföy","🔔 Alarmlar"])
 
 # ══ TAB 1: GRAFİK ══════════════════════════════════════════════════════════════
 with tab1:
@@ -911,7 +924,7 @@ with tab1:
             info = get_ticker_info(ticker_input)
 
         if df.empty:
-            st.error("❌ Veri bulunamadı. BIST hisseleri için `.IS` ekleyin (örn: THYAO.IS)")
+            st.error("❌ Veri bulunamadı. Sembolü kontrol edin. (Örn: AAPL, THYAO, GARAN, BTC-USD)")
         else:
             df = calculate_indicators(df)
             signals  = generate_signals(df)
