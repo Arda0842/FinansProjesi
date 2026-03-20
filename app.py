@@ -157,7 +157,7 @@ def verify_login(username: str, password: str) -> tuple[bool, str]:
 # ─── SESSION STATE ──────────────────────────────────────────────────────────────
 for key, default in [("portfolio",[]),("alerts",[]),("groq_key",""),
                      ("logged_in", False), ("username", ""), ("auth_page", "login"),
-                     ("auth_msg", ""), ("auth_ok", False)]:
+                     ("auth_msg", ""), ("auth_ok", False), ("splash_done", False)]:
     if key not in st.session_state:
         st.session_state[key] = default
 
@@ -167,6 +167,176 @@ if not st.session_state.groq_key:
         st.session_state.groq_key = st.secrets["GROQ_API_KEY"]
     except:
         pass
+
+# ─── SPLASH SCREEN ─────────────────────────────────────────────────────────────
+if not st.session_state.logged_in and not st.session_state.splash_done:
+    st.markdown("""
+    <style>
+    section[data-testid="stSidebar"] { display:none !important; }
+    header[data-testid="stHeader"]   { display:none !important; }
+    #MainMenu, footer                { display:none !important; }
+    .block-container { padding:0 !important; max-width:100% !important; }
+
+    .splash {
+        position: fixed; inset: 0;
+        background: #05080f;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        z-index: 9999;
+        animation: splashFadeOut 0.6s ease 2.8s forwards;
+    }
+    @keyframes splashFadeOut {
+        to { opacity: 0; pointer-events: none; }
+    }
+
+    /* Çizgiler arka plan */
+    .splash-grid {
+        position: absolute; inset: 0; overflow: hidden; opacity: 0.07;
+        background-image:
+            linear-gradient(#e02020 1px, transparent 1px),
+            linear-gradient(90deg, #e02020 1px, transparent 1px);
+        background-size: 60px 60px;
+    }
+
+    /* Borsa çizgi animasyonu */
+    .splash-chart {
+        position: absolute; bottom: 80px; width: 80%; max-width: 500px;
+        opacity: 0;
+        animation: chartRise 1s ease 0.5s forwards;
+    }
+    @keyframes chartRise {
+        from { opacity:0; transform: translateY(20px); }
+        to   { opacity:0.18; transform: translateY(0); }
+    }
+
+    /* Logo */
+    .splash-logo {
+        font-size: clamp(48px, 10vw, 88px);
+        font-weight: 900;
+        letter-spacing: -2px;
+        line-height: 1;
+        display: flex; align-items: center; gap: 12px;
+        opacity: 0;
+        animation: logoAppear 0.8s cubic-bezier(0.16,1,0.3,1) 0.3s forwards;
+    }
+    @keyframes logoAppear {
+        from { opacity:0; transform: scale(0.85) translateY(10px); }
+        to   { opacity:1; transform: scale(1) translateY(0); }
+    }
+    .sl-ard  {
+        color: #e02020;
+        text-shadow: 0 0 40px rgba(224,32,32,0.6), 0 0 80px rgba(224,32,32,0.3);
+    }
+    .sl-fin  { color: #ffffff; }
+
+    /* İ harfi — logodaki gibi ayrı nokta */
+    .sl-i-wrap {
+        display: inline-flex; flex-direction: column;
+        align-items: center; line-height: 1;
+        gap: 3px; position: relative; top: 2px;
+    }
+    .sl-i-dot {
+        width: clamp(7px,1.2vw,13px);
+        height: clamp(7px,1.2vw,13px);
+        background: #ffffff; border-radius: 50%;
+    }
+    .sl-i-stem { font-weight: 900; line-height: 1; }
+
+    /* Alt yazı */
+    .splash-sub {
+        margin-top: 18px;
+        color: #3a4a6a;
+        font-size: clamp(10px,1.5vw,13px);
+        letter-spacing: 4px;
+        text-transform: uppercase;
+        opacity: 0;
+        animation: subAppear 0.6s ease 1s forwards;
+    }
+    @keyframes subAppear {
+        from { opacity:0; transform: translateY(8px); }
+        to   { opacity:1; transform: translateY(0); }
+    }
+
+    /* Yükleniyor çubuğu */
+    .splash-bar-wrap {
+        margin-top: 48px;
+        width: clamp(160px, 30vw, 280px);
+        height: 2px;
+        background: #0d1225;
+        border-radius: 2px;
+        overflow: hidden;
+        opacity: 0;
+        animation: barShow 0.3s ease 1.2s forwards;
+    }
+    @keyframes barShow { to { opacity:1; } }
+    .splash-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #e02020, #ff6060);
+        border-radius: 2px;
+        width: 0%;
+        animation: barFill 1.4s cubic-bezier(0.4,0,0.2,1) 1.3s forwards;
+        box-shadow: 0 0 8px rgba(224,32,32,0.6);
+    }
+    @keyframes barFill { to { width: 100%; } }
+
+    /* Kıvılcım noktalar */
+    .splash-dots {
+        display: flex; gap: 8px; margin-top: 16px;
+        opacity: 0;
+        animation: barShow 0.3s ease 1.4s forwards;
+    }
+    .splash-dots span {
+        width: 5px; height: 5px; border-radius: 50%;
+        background: #e02020; opacity: 0.3;
+        animation: dotPulse 1s ease infinite;
+    }
+    .splash-dots span:nth-child(1) { animation-delay: 0s; }
+    .splash-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .splash-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes dotPulse {
+        0%,100% { opacity:0.2; transform:scale(1); }
+        50%      { opacity:1;   transform:scale(1.4); }
+    }
+    </style>
+
+    <div class="splash">
+      <div class="splash-grid"></div>
+
+      <!-- Arka plan grafik -->
+      <svg class="splash-chart" viewBox="0 0 500 80" preserveAspectRatio="none">
+        <polyline points="0,70 40,55 80,62 130,30 180,45 220,18 270,35 310,12 360,28 410,8 460,20 500,10"
+          fill="none" stroke="#e02020" stroke-width="2.5" stroke-linejoin="round"/>
+        <polyline points="0,70 40,55 80,62 130,30 180,45 220,18 270,35 310,12 360,28 410,8 460,20 500,10 500,80 0,80"
+          fill="url(#grad)" stroke="none"/>
+        <defs>
+          <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#e02020" stop-opacity="0.3"/>
+            <stop offset="100%" stop-color="#e02020" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+      </svg>
+
+      <!-- Ana logo -->
+      <div class="splash-logo">
+        <span class="sl-ard">ARD</span>
+        <span class="sl-fin">
+          F<span class="sl-i-wrap"><span class="sl-i-dot"></span><span class="sl-i-stem">İ</span></span>NANS
+        </span>
+      </div>
+
+      <div class="splash-sub">AI · Powered Trading Platform</div>
+
+      <div class="splash-bar-wrap"><div class="splash-bar"></div></div>
+      <div class="splash-dots">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    import time
+    time.sleep(3.2)
+    st.session_state.splash_done = True
+    st.rerun()
 
 # ─── AUTH EKRANI ───────────────────────────────────────────────────────────────
 if not st.session_state.logged_in:
