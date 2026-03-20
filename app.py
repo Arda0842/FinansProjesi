@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-import google.generativeai as genai
+from groq import Groq
 from datetime import datetime, timedelta
 import math
 
@@ -152,16 +152,16 @@ def verify_login(username: str, password: str) -> tuple[bool, str]:
     return True, db[username].get("email", "")
 
 # ─── SESSION STATE ──────────────────────────────────────────────────────────────
-for key, default in [("portfolio",[]),("alerts",[]),("gemini_key",""),
+for key, default in [("portfolio",[]),("alerts",[]),("groq_key",""),
                      ("logged_in", False), ("username", ""), ("auth_page", "login"),
                      ("auth_msg", ""), ("auth_ok", False)]:
     if key not in st.session_state:
         st.session_state[key] = default
 
-# Secrets'tan Gemini key oku
-if not st.session_state.gemini_key:
+# Secrets'tan Groq key oku
+if not st.session_state.groq_key:
     try:
-        st.session_state.gemini_key = st.secrets["GEMINI_API_KEY"]
+        st.session_state.groq_key = st.secrets["GROQ_API_KEY"]
     except:
         pass
 
@@ -758,37 +758,8 @@ AL: {al} | SAT: {sat} | NÖTR: {neutral}
 {chr(10).join(f"• {k}: {v[0]} — {v[1]}" for k,v in signals.items())}
 """
 
-def get_available_gemini_model(api_key: str):
-    """API'den desteklenen modelleri çekip uygun olanı döner."""
-    genai.configure(api_key=api_key)
-    try:
-        available = [m.name for m in genai.list_models()
-                     if "generateContent" in m.supported_generation_methods]
-        # Öncelik sırası
-        preferred = [
-            "models/gemini-2.0-flash",
-            "models/gemini-2.0-flash-lite",
-            "models/gemini-2.0-flash-exp",
-            "models/gemini-1.5-flash",
-            "models/gemini-1.5-pro",
-            "models/gemini-pro",
-        ]
-        for p in preferred:
-            if p in available:
-                return p
-        # Hiçbiri yoksa listedeki ilk modeli al
-        if available:
-            return available[0]
-    except:
-        pass
-    return None
-
-def ai_analyze_gemini(ticker, df, info, signals, al, sat, neutral, score, api_key):
-    genai.configure(api_key=api_key)
-
-    model_name = get_available_gemini_model(api_key)
-    if not model_name:
-        raise Exception("Kullanılabilir Gemini modeli bulunamadı. API key'inizi kontrol edin.")
+def ai_analyze_groq(ticker, df, info, signals, al, sat, neutral, score, api_key):
+    client = Groq(api_key=api_key)
 
     system_prompt = """Sen uzman bir borsa teknik ve temel analiz uzmanısın. Türkçe yanıt ver.
 Analizin bu bölümlerden oluşsun (emojili başlıklar kullan):
@@ -802,12 +773,40 @@ Analizin bu bölümlerden oluşsun (emojili başlıklar kullan):
 ⚠️ RİSKLER ve UYARILAR
 💡 ÖZET ve STRATEJİ ÖNERİSİ
 
-Her bölüm somut ve sayısal olsun. Not: Yatırım tavsiyesi değildir."""
+Her bölüm somut ve sayısal olsun. Yatırım tavsiyesi olmadığını belirt."""
 
     prompt = build_prompt(ticker, df, info, signals, al, sat, neutral, score)
-    model  = genai.GenerativeModel(model_name=model_name, system_instruction=system_prompt)
-    response = model.generate_content(prompt)
-    return f"_{model_name.split('/')[-1]}_\n\n" + response.text
+
+    # Model öncelik sırası — Groq'ta mevcut
+    GROQ_MODELS = [
+        "llama-3.3-70b-versatile",   # En iyi analiz kalitesi
+        "llama-3.1-70b-versatile",
+        "mixtral-8x7b-32768",
+        "llama3-70b-8192",
+        "llama3-8b-8192",
+    ]
+
+    last_err = None
+    for model_name in GROQ_MODELS:
+        try:
+            response = client.chat.completions.create(
+                model=model_name,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user",   "content": prompt}
+                ],
+                temperature=0.7,
+                max_tokens=2000,
+            )
+            return f"*{model_name}*\n\n" + response.choices[0].message.content
+        except Exception as e:
+            last_err = e
+            err_str = str(e)
+            if "429" in err_str or "quota" in err_str.lower() or "model_not_found" in err_str.lower() or "404" in err_str:
+                continue
+            raise e
+
+    raise Exception(f"Groq hatası: {last_err}")
 
 # ─── SIDEBAR ───────────────────────────────────────────────────────────────────
 with st.sidebar:
@@ -1024,13 +1023,13 @@ with tab1:
 
 # ══ TAB 2: AI ANALİZ ═══════════════════════════════════════════════════════════
 with tab2:
-    st.markdown('<div class="gemini-badge">✦ Powered by Google Gemini 2.0 Flash</div>', unsafe_allow_html=True)
+    st.markdown('<div class="gemini-badge">⚡ Powered by Groq · Llama 3.3 70B</div>', unsafe_allow_html=True)
     st.markdown("### 🤖 Yapay Zeka Teknik Analiz")
 
-    c_a, c_b, c_c = st.columns([2.5, 1, 1])
-    with c_a:
-        ai_ticker = st.text_input("Analiz Edilecek Sembol", value=ticker_input,
-                                   placeholder="AAPL, THYAO.IS, BTC-USD...").upper().strip()
+    ai_ticker_raw = st.text_input("Analiz Edilecek Sembol", value=ticker_input,
+                               placeholder="AAPL, THYAO, BTC-USD...").upper().strip()
+    ai_ticker = resolve_ticker(ai_ticker_raw)
+    c_b, c_c = st.columns([1, 1])
     with c_b:
         ai_period = st.selectbox("Dönem", ["1mo","3mo","6mo","1y"], index=1, key="ai_period")
     with c_c:
@@ -1038,7 +1037,7 @@ with tab2:
         analyze_btn = st.button("🔍 Analiz Et", use_container_width=True)
 
     if analyze_btn and ai_ticker:
-        with st.spinner("🤖 Gemini analiz yapıyor... (~10-15 saniye)"):
+        with st.spinner("🤖 Groq Llama 3.3 analiz yapıyor..."):
             try:
                 df_ai = get_stock_data(ai_ticker, ai_period, "1d")
                 if df_ai.empty:
@@ -1048,28 +1047,31 @@ with tab2:
                     sigs_ai = generate_signals(df_ai)
                     al_ai, sat_ai, neu_ai, score_ai = compute_score(sigs_ai)
                     info_ai = get_ticker_info(ai_ticker)
-                    result  = ai_analyze_gemini(ai_ticker, df_ai, info_ai, sigs_ai,
-                                                al_ai, sat_ai, neu_ai, score_ai,
-                                                st.session_state.gemini_key)
+                    result  = ai_analyze_groq(ai_ticker, df_ai, info_ai, sigs_ai,
+                                              al_ai, sat_ai, neu_ai, score_ai,
+                                              st.session_state.groq_key)
                     st.markdown(f'<div class="ai-response">{result}</div>', unsafe_allow_html=True)
             except Exception as e:
-                st.error(f"Gemini hatası: {e}")
+                st.error(f"AI hatası: {e}")
 
     st.markdown("---")
     st.markdown("### 💬 Serbest Borsa Sorusu")
-    custom_q = st.text_area("", placeholder="Örn: THYAO.IS'de golden cross oluştu mu? RSI ve MACD birlikte AL sinyali veriyor mu? Bollinger sıkışması var mı?", height=90, label_visibility="collapsed")
+    custom_q = st.text_area("", placeholder="Örn: THYAO'da golden cross oluştu mu? RSI ve MACD birlikte AL sinyali veriyor mu? Bollinger sıkışması var mı?", height=90, label_visibility="collapsed")
     if st.button("Gönder 🚀") and custom_q:
         with st.spinner("Yanıt üretiliyor..."):
             try:
-                genai.configure(api_key=st.session_state.gemini_key)
-                model_name = get_available_gemini_model(st.session_state.gemini_key)
-                if not model_name:
-                    st.error("⚠️ Kullanılabilir model bulunamadı. API key'inizi kontrol edin.")
-                else:
-                    sys_inst = "Sen uzman bir borsa analisti ve teknik analiz uzmanısın. Türkçe, net ve somut yanıt ver. Her zaman 'yatırım tavsiyesi değildir' notunu ekle."
-                    m = genai.GenerativeModel(model_name=model_name, system_instruction=sys_inst)
-                    resp_text = m.generate_content(custom_q).text
-                    st.markdown(f'<div class="ai-response">{resp_text}</div>', unsafe_allow_html=True)
+                client = Groq(api_key=st.session_state.groq_key)
+                response = client.chat.completions.create(
+                    model="llama-3.3-70b-versatile",
+                    messages=[
+                        {"role": "system", "content": "Sen uzman bir borsa analisti ve teknik analiz uzmanısın. Türkçe, net ve somut yanıt ver. Her zaman 'yatırım tavsiyesi değildir' notunu ekle."},
+                        {"role": "user",   "content": custom_q}
+                    ],
+                    temperature=0.7,
+                    max_tokens=1000,
+                )
+                resp_text = response.choices[0].message.content
+                st.markdown(f'<div class="ai-response">{resp_text}</div>', unsafe_allow_html=True)
             except Exception as e:
                 st.error(f"Hata: {e}")
 
