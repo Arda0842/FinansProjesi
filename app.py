@@ -7,6 +7,9 @@ from plotly.subplots import make_subplots
 from groq import Groq
 from datetime import datetime, timedelta
 import math
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 # ─── SAYFA AYARLARI ────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -217,7 +220,7 @@ if not st.session_state.logged_in:
     <div class="auth-card">
       <div class="ard-logo">
         <span class="ard-red">ARD</span>
-        <span class="ard-black"> F<span class="ard-dot"></span>NANS</span>
+        <span class="ard-black"> FİNANS</span>
       </div>
       <div class="auth-sub">AI · Powered Trading Platform</div>
     </div>
@@ -821,13 +824,70 @@ Her bölüm somut ve sayısal olsun. Yatırım tavsiyesi olmadığını belirt."
 
     raise Exception(f"Groq hatası: {last_err}")
 
+# ─── E-POSTA ALARM FONKSİYONU ──────────────────────────────────────────────────
+def send_alarm_email(to_email: str, ticker: str, alarm_type: str,
+                     target_price: float, current_price: float):
+    """Gmail SMTP ile alarm e-postası gönderir."""
+    try:
+        sender    = st.secrets["EMAIL_SENDER"]
+        password  = st.secrets["EMAIL_PASSWORD"]
+    except:
+        return False, "E-posta ayarları Secrets'ta tanımlı değil."
+
+    subject = f"🔔 ARD Finans Alarm: {ticker} {alarm_type}!"
+    html = f"""
+    <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;
+                background:#0a0e1a;border:1px solid #1e2a45;border-radius:16px;overflow:hidden">
+      <div style="background:linear-gradient(135deg,#1e2a45,#0d1225);padding:24px;text-align:center">
+        <span style="font-size:28px;font-weight:900">
+          <span style="color:#e02020">ARD</span>
+          <span style="color:#e0e6f0"> FİNANS</span>
+        </span>
+        <div style="color:#4b5a75;font-size:11px;letter-spacing:2px;margin-top:4px">ALARM BİLDİRİMİ</div>
+      </div>
+      <div style="padding:28px">
+        <div style="background:#111827;border:1px solid #1e2a45;border-radius:12px;padding:20px;margin-bottom:16px">
+          <div style="font-size:32px;font-weight:700;color:#e0e6f0;font-family:monospace">{ticker}</div>
+          <div style="color:#f59e0b;font-size:18px;font-weight:700;margin:8px 0">🔥 ALARM TETİKLENDİ</div>
+          <table style="width:100%;color:#9ca3af;font-size:14px">
+            <tr><td style="padding:4px 0">Koşul:</td>
+                <td style="color:#e0e6f0;font-family:monospace">{alarm_type}</td></tr>
+            <tr><td style="padding:4px 0">Hedef Fiyat:</td>
+                <td style="color:#f59e0b;font-family:monospace">{target_price:.2f}</td></tr>
+            <tr><td style="padding:4px 0">Güncel Fiyat:</td>
+                <td style="color:#34d399;font-family:monospace;font-weight:700">{current_price:.2f}</td></tr>
+            <tr><td style="padding:4px 0">Tarih/Saat:</td>
+                <td style="color:#e0e6f0;font-family:monospace">{datetime.now().strftime("%d.%m.%Y %H:%M")}</td></tr>
+          </table>
+        </div>
+        <div style="color:#4b5a75;font-size:11px;text-align:center;margin-top:16px">
+          ⚠️ Bu bildirim yalnızca bilgilendirme amaçlıdır. Yatırım tavsiyesi değildir.<br>
+          © 2026 ARD Finans
+        </div>
+      </div>
+    </div>
+    """
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"]    = sender
+        msg["To"]      = to_email
+        msg.attach(MIMEText(html, "html", "utf-8"))
+
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(sender, password)
+            server.sendmail(sender, to_email, msg.as_string())
+        return True, "E-posta gönderildi!"
+    except Exception as e:
+        return False, str(e)
+
 # ─── SIDEBAR ───────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("""
     <div style="text-align:center; margin-bottom:4px">
       <span style="font-size:26px; font-weight:900; letter-spacing:-1px; line-height:1">
         <span style="color:#e02020">ARD</span>
-        <span style="color:#e0e6f0"> F<span style="display:inline-block;width:6px;height:6px;background:#e0e6f0;border-radius:50%;vertical-align:super;margin:0 1px"></span>NANS</span>
+        <span style="color:#e0e6f0"> FİNANS</span>
       </span>
     </div>
     <div style="text-align:center; color:#4b5a75; font-size:10px; letter-spacing:2px; text-transform:uppercase; margin-bottom:16px;">
@@ -906,9 +966,16 @@ with st.sidebar:
     c5, c6 = st.columns(2)
     with c5: alarm_price = st.number_input("Hedef",  min_value=0.0, value=100.0, step=1.0)
     with c6: alarm_type  = st.selectbox("Tip", ["Üstüne çık","Altına in"])
+    alarm_email = st.text_input("📧 Bildirim E-postası", placeholder="ornek@mail.com", key="alrm_email")
     if st.button("Alarm Ekle", use_container_width=True):
         if alrm_ticker:
-            st.session_state.alerts.append({"ticker":alrm_ticker,"price":alarm_price,"type":alarm_type})
+            st.session_state.alerts.append({
+                "ticker": alrm_ticker,
+                "price":  alarm_price,
+                "type":   alarm_type,
+                "email":  alarm_email.strip(),
+                "fired":  False
+            })
             st.success("✓ Alarm eklendi")
 
 # ─── ANA İÇERİK ────────────────────────────────────────────────────────────────
@@ -1177,36 +1244,58 @@ with tab3:
 # ══ TAB 4: ALARMLAR ════════════════════════════════════════════════════════════
 with tab4:
     st.markdown("### 🔔 Fiyat Alarmları")
+    st.caption("Alarm tetiklendiğinde belirtilen e-posta adresine otomatik bildirim gönderilir.")
 
     if not st.session_state.alerts:
         st.info("Henüz alarm yok. Sol menüden ekleyin.")
     else:
         fired_list = []
-        hcols = st.columns([1.2,1,1,0.8,1.5,0.4])
-        for hc, lbl in zip(hcols,["Sembol","Hedef","Güncel","Tür","Durum",""]):
-            hc.markdown(f"<span style='color:#4b5a75;font-size:11px;text-transform:uppercase;letter-spacing:1px'>{lbl}</span>", unsafe_allow_html=True)
+        hcols = st.columns([1.2, 0.9, 0.9, 0.8, 1.4, 1.6, 0.4])
+        for hc, lbl in zip(hcols, ["Sembol","Hedef","Güncel","Tür","Durum","E-posta",""]):
+            hc.markdown(f"<span style='color:#4b5a75;font-size:11px;text-transform:uppercase;letter-spacing:1px'>{lbl}</span>",
+                        unsafe_allow_html=True)
         st.markdown("<hr style='margin:4px 0;border-color:#1e2a45'>", unsafe_allow_html=True)
 
         for i, alarm in enumerate(st.session_state.alerts):
             try:
                 d = get_stock_data(alarm["ticker"], "1d", "5m")
                 current = float(d["Close"].iloc[-1]) if not d.empty else 0.0
-                fired = (alarm["type"]=="Üstüne çık" and current >= alarm["price"]) or \
-                        (alarm["type"]=="Altına in"  and current <= alarm["price"])
+                fired = (alarm["type"] == "Üstüne çık" and current >= alarm["price"]) or \
+                        (alarm["type"] == "Altına in"  and current <= alarm["price"])
                 dist  = (current - alarm["price"]) / alarm["price"] * 100
+
+                # E-posta gönder (sadece ilk tetiklenişte)
+                if fired and not alarm.get("fired", False) and alarm.get("email"):
+                    ok, msg = send_alarm_email(
+                        alarm["email"], alarm["ticker"],
+                        alarm["type"], alarm["price"], current
+                    )
+                    st.session_state.alerts[i]["fired"] = True
+                    if ok:
+                        st.toast(f"📧 {alarm['ticker']} alarmı {alarm['email']} adresine gönderildi!", icon="✅")
+                    else:
+                        st.toast(f"E-posta gönderilemedi: {msg}", icon="⚠️")
+
                 status_html = "🔥 <span style='color:#f59e0b;font-weight:700'>TETİKLENDİ</span>" if fired \
                               else f"⏳ <span style='color:#6b7a99'>Bekliyor ({dist:+.1f}%)</span>"
-                cols = st.columns([1.2,1,1,0.8,1.5,0.4])
-                cols[0].markdown(f"<b style='font-family:Space Mono'>{alarm['ticker']}</b>", unsafe_allow_html=True)
-                cols[1].markdown(f"<span style='font-family:Space Mono'>{alarm['price']:.2f}</span>", unsafe_allow_html=True)
+
+                cols = st.columns([1.2, 0.9, 0.9, 0.8, 1.4, 1.6, 0.4])
+                cols[0].markdown(f"<b style='font-family:Space Mono;color:#e0e6f0'>{alarm['ticker']}</b>", unsafe_allow_html=True)
+                cols[1].markdown(f"<span style='font-family:Space Mono;color:#f59e0b'>{alarm['price']:.2f}</span>", unsafe_allow_html=True)
                 cols[2].markdown(f"<span style='font-family:Space Mono;color:#e0e6f0'>{current:.2f}</span>", unsafe_allow_html=True)
-                cols[3].markdown(f"<span style='font-size:12px;color:#9ca3af'>{alarm['type']}</span>", unsafe_allow_html=True)
+                cols[3].markdown(f"<span style='font-size:11px;color:#9ca3af'>{alarm['type']}</span>", unsafe_allow_html=True)
                 cols[4].markdown(status_html, unsafe_allow_html=True)
-                if cols[5].button("✕", key=f"adel_{i}"):
+                email_disp = alarm.get("email","—")
+                email_short = email_disp[:18] + "…" if len(email_disp) > 18 else email_disp
+                cols[5].markdown(f"<span style='font-size:11px;color:#4b5a75'>{'📧 ' + email_short if email_disp != '—' else '—'}</span>", unsafe_allow_html=True)
+
+                if cols[6].button("✕", key=f"adel_{i}"):
                     st.session_state.alerts.pop(i)
                     st.rerun()
+
                 if fired:
                     fired_list.append(f"{alarm['ticker']} → {alarm['type']} {alarm['price']:.2f} (Güncel: {current:.2f})")
+
                 st.markdown("<hr style='margin:4px 0;border-color:#111827'>", unsafe_allow_html=True)
             except:
                 pass
