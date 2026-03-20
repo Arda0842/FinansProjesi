@@ -758,16 +758,38 @@ AL: {al} | SAT: {sat} | NÖTR: {neutral}
 {chr(10).join(f"• {k}: {v[0]} — {v[1]}" for k,v in signals.items())}
 """
 
+def get_available_gemini_model(api_key: str):
+    """API'den desteklenen modelleri çekip uygun olanı döner."""
+    genai.configure(api_key=api_key)
+    try:
+        available = [m.name for m in genai.list_models()
+                     if "generateContent" in m.supported_generation_methods]
+        # Öncelik sırası
+        preferred = [
+            "models/gemini-2.0-flash",
+            "models/gemini-2.0-flash-lite",
+            "models/gemini-2.0-flash-exp",
+            "models/gemini-1.5-flash",
+            "models/gemini-1.5-pro",
+            "models/gemini-pro",
+        ]
+        for p in preferred:
+            if p in available:
+                return p
+        # Hiçbiri yoksa listedeki ilk modeli al
+        if available:
+            return available[0]
+    except:
+        pass
+    return None
+
 def ai_analyze_gemini(ticker, df, info, signals, al, sat, neutral, score, api_key):
     genai.configure(api_key=api_key)
 
-    # Güncel model adları (2025 API)
-    MODELS = [
-        "models/gemini-2.0-flash",
-        "models/gemini-2.0-flash-lite",
-        "models/gemini-1.5-flash-latest",
-        "models/gemini-1.5-flash-8b-latest",
-    ]
+    model_name = get_available_gemini_model(api_key)
+    if not model_name:
+        raise Exception("Kullanılabilir Gemini modeli bulunamadı. API key'inizi kontrol edin.")
+
     system_prompt = """Sen uzman bir borsa teknik ve temel analiz uzmanısın. Türkçe yanıt ver.
 Analizin bu bölümlerden oluşsun (emojili başlıklar kullan):
 
@@ -783,25 +805,9 @@ Analizin bu bölümlerden oluşsun (emojili başlıklar kullan):
 Her bölüm somut ve sayısal olsun. Not: Yatırım tavsiyesi değildir."""
 
     prompt = build_prompt(ticker, df, info, signals, al, sat, neutral, score)
-    last_err = None
-
-    for model_name in MODELS:
-        try:
-            model = genai.GenerativeModel(model_name=model_name, system_instruction=system_prompt)
-            response = model.generate_content(prompt)
-            return f"_{model_name.split('/')[-1]}_\n\n" + response.text
-        except Exception as e:
-            last_err = e
-            err_str = str(e)
-            if "429" in err_str or "quota" in err_str.lower() or "RESOURCE_EXHAUSTED" in err_str or "404" in err_str:
-                continue
-            raise e
-
-    raise Exception(
-        f"Tüm modeller kullanılamıyor.\n\n"
-        f"**Çözüm:** Yeni API key alın → https://aistudio.google.com/app/apikey\n\n"
-        f"Son hata: {last_err}"
-    )
+    model  = genai.GenerativeModel(model_name=model_name, system_instruction=system_prompt)
+    response = model.generate_content(prompt)
+    return f"_{model_name.split('/')[-1]}_\n\n" + response.text
 
 # ─── SIDEBAR ───────────────────────────────────────────────────────────────────
 with st.sidebar:
@@ -1056,27 +1062,14 @@ with tab2:
         with st.spinner("Yanıt üretiliyor..."):
             try:
                 genai.configure(api_key=st.session_state.gemini_key)
-                sys_inst = "Sen uzman bir borsa analisti ve teknik analiz uzmanısın. Türkçe, net ve somut yanıt ver. Her zaman 'yatırım tavsiyesi değildir' notunu ekle."
-                MODELS_Q  = [
-                    "models/gemini-2.0-flash",
-                    "models/gemini-2.0-flash-lite",
-                    "models/gemini-1.5-flash-latest",
-                    "models/gemini-1.5-flash-8b-latest",
-                ]
-                resp_text = None
-                for m_name in MODELS_Q:
-                    try:
-                        m = genai.GenerativeModel(model_name=m_name, system_instruction=sys_inst)
-                        resp_text = m.generate_content(custom_q).text
-                        break
-                    except Exception as me:
-                        if "429" in str(me) or "quota" in str(me).lower() or "404" in str(me):
-                            continue
-                        raise me
-                if resp_text:
-                    st.markdown(f'<div class="ai-response">{resp_text}</div>', unsafe_allow_html=True)
+                model_name = get_available_gemini_model(st.session_state.gemini_key)
+                if not model_name:
+                    st.error("⚠️ Kullanılabilir model bulunamadı. API key'inizi kontrol edin.")
                 else:
-                    st.error("⚠️ Tüm modeller kullanılamıyor. Yeni API key alın: https://aistudio.google.com/app/apikey")
+                    sys_inst = "Sen uzman bir borsa analisti ve teknik analiz uzmanısın. Türkçe, net ve somut yanıt ver. Her zaman 'yatırım tavsiyesi değildir' notunu ekle."
+                    m = genai.GenerativeModel(model_name=model_name, system_instruction=sys_inst)
+                    resp_text = m.generate_content(custom_q).text
+                    st.markdown(f'<div class="ai-response">{resp_text}</div>', unsafe_allow_html=True)
             except Exception as e:
                 st.error(f"Hata: {e}")
 
