@@ -289,19 +289,54 @@ if not st.session_state.logged_in:
 
 # ─── VERİ FONKSİYONLARI ────────────────────────────────────────────────────────
 
+# Bilinen BIST hisseleri — .IS otomatik eklenir
+BIST_TICKERS = {
+    "THYAO","GARAN","AKBNK","YKBNK","ISCTR","HALKB","VAKBN","SISE","EREGL","KRDMD",
+    "BIMAS","MGROS","MIGRS","ARCLK","TOASO","FROTO","DOAS","OTKAR","KCHOL","SAHOL",
+    "PETKM","TUPRS","AYGAZ","AKSA","VESBE","VESTL","TCELL","TTKOM","ASELS","KOZAL",
+    "KOZAA","GOLD","ENKAI","EKGYO","ISGYO","TSKB","ALARK","ALGYO","SODA","TRKCM",
+    "NETAS","LOGO","INDES","DOHOL","TKFEN","ISMEN","TATGD","ULKER","PGSUS","THYAO",
+    "TAVHL","CLEBI","MAVI","LCWAI","BERA","BRISA","GUBRF","HEKTS","KARSAN","KLNMA",
+    "KMPUR","KONTR","KONYA","KORDS","KURTOSAN","LINK","LMKDC","LREDY","MAALT",
+    "MAKTK","MEGAP","MERIT","METRO","MIPAZ","MPARK","NTHOL","NTTUR","NUHCM",
+    "ODAS","ONCSM","ORGE","OSMEN","OYAKC","OYLUM","OZGYO","OZKGY","PAPIL",
+    "PARSN","PCILT","PENGD","PKENT","PRKAB","PRKME","PRZMA","QNBFL","QNBFB",
+    "RAYSG","RGYAS","RNPOL","RTALB","RUBNS","RYSAS","SAMAT","SARKY","SASA",
+    "SDTTR","SEGYO","SEKFK","SEKUR","SELEC","SELGD","SERVE","SKTAS","SMART",
+    "SNKRN","SODSN","SOKM","SRVGY","SUWEN","TCKRC","TGSAS","THYAO","TIRE",
+    "TKURU","TLMAN","TMSN","TNZTP","TRGYO","TRILC","TSPOR","TTRAK","TUCLK",
+    "TUKAS","TURGZ","TURSG","UFUK","ULUFA","ULUSE","ULUUN","UMPAS","UNLU",
+    "USAK","USDTR","VANGD","VERUS","VKFYO","VKGYO","VKTUR","YAPRK","YATAS",
+    "YESIL","YGGYO","YKGYO","YKSLN","YUNSA","ZEDUR","ZOREN"
+}
+
+def resolve_ticker(raw: str) -> str:
+    """Girilen hisse sembolünü akıllıca çözer. BIST hisselerine .IS ekler."""
+    t = raw.upper().strip()
+    # Zaten uzantı var
+    if "." in t or "=" in t or "-" in t:
+        return t
+    # Bilinen BIST listesinde var mı?
+    if t in BIST_TICKERS:
+        return t + ".IS"
+    # Yahoo Finance'de direkt dene, bulamazsa .IS ile dene
+    return t
+
 @st.cache_data(ttl=60)
 def get_stock_data(ticker: str, period: str, interval: str) -> pd.DataFrame:
-    try:
-        df = yf.download(ticker, period=period, interval=interval, progress=False, auto_adjust=True)
-        if df.empty:
-            return pd.DataFrame()
-        if isinstance(df.columns, pd.MultiIndex):
-            df.columns = df.columns.get_level_values(0)
-        df = df[["Open","High","Low","Close","Volume"]].dropna()
-        return df
-    except Exception as e:
-        st.error(f"Veri alınamadı: {e}")
-        return pd.DataFrame()
+    # Önce direkt dene, boşsa .IS ekleyerek tekrar dene
+    for t in [ticker, ticker + ".IS"] if "." not in ticker else [ticker]:
+        try:
+            df = yf.download(t, period=period, interval=interval, progress=False, auto_adjust=True)
+            if not df.empty:
+                if isinstance(df.columns, pd.MultiIndex):
+                    df.columns = df.columns.get_level_values(0)
+                df = df[["Open","High","Low","Close","Volume"]].dropna()
+                if not df.empty:
+                    return df
+        except:
+            continue
+    return pd.DataFrame()
 
 @st.cache_data(ttl=60)
 def get_ticker_info(ticker: str) -> dict:
@@ -783,8 +818,11 @@ with st.sidebar:
     st.divider()
 
     st.markdown("#### 🔍 Hisse")
-    ticker_input = st.text_input("Sembol", value="AAPL",
-                                  placeholder="AAPL / THYAO.IS / BTC-USD").upper().strip()
+    _raw_ticker = st.text_input("Sembol", value="AAPL",
+                                 placeholder="AAPL / THYAO / BTC-USD").upper().strip()
+    ticker_input = resolve_ticker(_raw_ticker)
+    if ticker_input != _raw_ticker and _raw_ticker:
+        st.caption(f"🇹🇷 BIST: **{ticker_input}** olarak aranıyor")
     col1, col2 = st.columns(2)
     with col1: period   = st.selectbox("Dönem",  ["5d","1mo","3mo","6mo","1y","2y","5y"], index=2)
     with col2: interval = st.selectbox("Aralık", ["1d","1wk","1h","30m","15m","5m"],      index=0)
@@ -806,7 +844,10 @@ with st.sidebar:
 
     st.divider()
     st.markdown("#### ➕ Portföy")
-    pf_ticker = st.text_input("Sembol", key="pf_ticker", placeholder="AAPL").upper().strip()
+    _pf_raw = st.text_input("Sembol", key="pf_ticker", placeholder="AAPL / THYAO").upper().strip()
+    pf_ticker = resolve_ticker(_pf_raw)
+    if pf_ticker != _pf_raw and _pf_raw:
+        st.caption(f"🇹🇷 {pf_ticker}")
     c3, c4 = st.columns(2)
     with c3: pf_qty  = st.number_input("Adet",    min_value=1,   value=10,  step=1)
     with c4: pf_cost = st.number_input("Maliyet", min_value=0.0, value=0.0, step=0.01, format="%.2f")
@@ -819,7 +860,8 @@ with st.sidebar:
 
     st.divider()
     st.markdown("#### 🔔 Fiyat Alarmı")
-    alrm_ticker = st.text_input("Sembol", key="alrm_t", placeholder="TSLA").upper()
+    _alrm_raw = st.text_input("Sembol", key="alrm_t", placeholder="TSLA / GARAN").upper()
+    alrm_ticker = resolve_ticker(_alrm_raw)
     c5, c6 = st.columns(2)
     with c5: alarm_price = st.number_input("Hedef",  min_value=0.0, value=100.0, step=1.0)
     with c6: alarm_type  = st.selectbox("Tip", ["Üstüne çık","Altına in"])
@@ -1127,3 +1169,25 @@ with tab4:
             st.markdown("---")
             for msg in fired_list:
                 st.warning(f"🔔 ALARM: {msg}", icon="⚠️")
+
+# ─── YASAL UYARI FOOTER ────────────────────────────────────────────────────────
+st.markdown("""
+<div style="
+  margin-top: 48px;
+  padding: 14px 20px;
+  background: #0d1225;
+  border-top: 1px solid #1e2a45;
+  border-radius: 10px;
+  text-align: center;
+">
+  <span style="color:#4b5a75; font-size:12px; letter-spacing:0.3px;">
+    ⚠️ <strong style="color:#6b7a99">Yasal Uyarı:</strong>
+    Bu platform yalnızca bilgilendirme ve eğitim amaçlıdır.
+    Burada yer alan hiçbir içerik <strong style="color:#f59e0b">yatırım tavsiyesi değildir.</strong>
+    Yatırım kararlarınızı vermeden önce lisanslı bir finansal danışmana başvurmanız tavsiye edilir.
+    ARD Finans, kullanıcıların aldığı yatırım kararlarından sorumlu tutulamaz.
+  </span>
+  <br><br>
+  <span style="color:#2d3f5e; font-size:11px;">© 2026 ARD Finans · Tüm hakları saklıdır</span>
+</div>
+""", unsafe_allow_html=True)
