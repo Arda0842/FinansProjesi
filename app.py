@@ -96,9 +96,65 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+import hashlib, json, os, re
+from pathlib import Path
+
+# ─── KULLANICI VERİTABANI (kalıcı JSON) ────────────────────────────────────────
+USERS_FILE = Path("users_db.json")
+
+def _load_users() -> dict:
+    if USERS_FILE.exists():
+        try:
+            return json.loads(USERS_FILE.read_text(encoding="utf-8"))
+        except:
+            return {}
+    return {}
+
+def _save_users(db: dict):
+    USERS_FILE.write_text(json.dumps(db, ensure_ascii=False, indent=2), encoding="utf-8")
+
+def _hash(pw: str) -> str:
+    return hashlib.sha256(pw.encode()).hexdigest()
+
+def user_exists(username: str) -> bool:
+    return username.lower() in _load_users()
+
+def register_user(username: str, email: str, password: str) -> tuple[bool, str]:
+    username = username.strip().lower()
+    if not username or not email or not password:
+        return False, "Tüm alanlar zorunludur."
+    if len(username) < 3:
+        return False, "Kullanıcı adı en az 3 karakter olmalı."
+    if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+        return False, "Geçerli bir e-posta girin."
+    if len(password) < 6:
+        return False, "Şifre en az 6 karakter olmalı."
+    db = _load_users()
+    if username in db:
+        return False, "Bu kullanıcı adı zaten alınmış."
+    if any(v.get("email","").lower() == email.lower() for v in db.values()):
+        return False, "Bu e-posta zaten kayıtlı."
+    db[username] = {
+        "email": email,
+        "password": _hash(password),
+        "created": datetime.now().strftime("%Y-%m-%d %H:%M")
+    }
+    _save_users(db)
+    return True, "Kayıt başarılı!"
+
+def verify_login(username: str, password: str) -> tuple[bool, str]:
+    username = username.strip().lower()
+    db = _load_users()
+    if username not in db:
+        return False, "Kullanıcı bulunamadı."
+    if db[username]["password"] != _hash(password):
+        return False, "Şifre hatalı."
+    return True, db[username].get("email", "")
+
 # ─── SESSION STATE ──────────────────────────────────────────────────────────────
 for key, default in [("portfolio",[]),("alerts",[]),("gemini_key",""),
-                     ("logged_in", False), ("username", ""), ("login_error", False)]:
+                     ("logged_in", False), ("username", ""), ("auth_page", "login"),
+                     ("auth_msg", ""), ("auth_ok", False)]:
     if key not in st.session_state:
         st.session_state[key] = default
 
@@ -109,59 +165,124 @@ if not st.session_state.gemini_key:
     except:
         pass
 
-# ─── LOGIN FONKSİYONU ──────────────────────────────────────────────────────────
-def check_login(username: str, password: str) -> bool:
-    try:
-        users = st.secrets["users"]
-        return users.get(username) == password
-    except:
-        return username == "admin" and password == "borsa2024"
-
-# ─── GİRİŞ EKRANI ─────────────────────────────────────────────────────────────
+# ─── AUTH EKRANI ───────────────────────────────────────────────────────────────
 if not st.session_state.logged_in:
-    # Sidebar'ı gizle
+
     st.markdown("""
     <style>
-    section[data-testid="stSidebar"] { display: none; }
-    .block-container { max-width: 460px !important; padding-top: 80px !important; }
+    section[data-testid="stSidebar"]   { display:none !important; }
+    header[data-testid="stHeader"]     { background:transparent; }
+    .block-container { max-width:480px !important; padding-top:40px !important; padding-bottom:40px !important; }
+
+    /* Kart */
+    .auth-card {
+        background: linear-gradient(160deg,#0d1427,#111827);
+        border: 1px solid #1e2a45;
+        border-radius: 20px;
+        padding: 36px 36px 28px;
+        box-shadow: 0 20px 60px rgba(0,0,0,.55);
+        margin-bottom: 0;
+    }
+    /* Logo */
+    .ard-logo {
+        text-align:center;
+        font-size: 38px;
+        font-weight: 900;
+        letter-spacing: -1px;
+        line-height: 1;
+        margin-bottom: 4px;
+    }
+    .ard-red   { color: #e02020; }
+    .ard-black { color: #e0e6f0; }
+    .ard-dot   { display:inline-block; width:8px; height:8px; background:#e0e6f0;
+                 border-radius:50%; vertical-align:super; margin-left:1px; }
+    .auth-sub  { text-align:center; color:#4b5a75; font-size:11px;
+                 letter-spacing:2.5px; text-transform:uppercase; margin-bottom:28px; }
+    /* Tab seçici */
+    .tab-row   { display:flex; gap:0; border:1px solid #1e2a45; border-radius:10px; overflow:hidden; margin-bottom:24px; }
+    .tab-btn   { flex:1; padding:9px; text-align:center; font-size:13px; font-weight:600;
+                 cursor:pointer; transition:background .2s; }
+    .tab-active{ background:#1e2a45; color:#e0e6f0; }
+    .tab-idle  { background:transparent; color:#4b5a75; }
+    /* Footer */
+    .auth-footer { text-align:center; color:#253350; font-size:11px; margin-top:20px; }
+    /* Input label */
+    .stTextInput label { color:#6b7a99 !important; font-size:12px !important;
+                         text-transform:uppercase; letter-spacing:1px; }
     </style>
     """, unsafe_allow_html=True)
 
+    # ── LOGO ──────────────────────────────────────────────────────────────────
     st.markdown("""
-    <div style="text-align:center; margin-bottom:8px">
-      <span style="font-family:'Space Mono',monospace; font-size:36px; font-weight:700;
-        background:linear-gradient(135deg,#3b82f6,#8b5cf6,#06b6d4);
-        -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-        background-clip:text;">📈 BorsaRobot</span>
-    </div>
-    <div style="text-align:center; color:#4b5a75; font-size:12px;
-      letter-spacing:2px; text-transform:uppercase; margin-bottom:40px;">
-      AI · Powered Trading Platform
+    <div class="auth-card">
+      <div class="ard-logo">
+        <span class="ard-red">ARD</span>
+        <span class="ard-black"> F<span class="ard-dot"></span>NANS</span>
+      </div>
+      <div class="auth-sub">AI · Powered Trading Platform</div>
     </div>
     """, unsafe_allow_html=True)
 
-    username = st.text_input("👤 Kullanıcı Adı", placeholder="kullanıcı adınız", key="login_user")
-    password = st.text_input("🔒 Şifre", placeholder="••••••••", type="password", key="login_pass")
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    if st.button("Giriş Yap →", use_container_width=True, key="login_btn"):
-        if check_login(username, password):
-            st.session_state.logged_in = True
-            st.session_state.username  = username
-            st.session_state.login_error = False
+    # ── SEKME SEÇİCİ ──────────────────────────────────────────────────────────
+    col_l, col_r = st.columns(2)
+    with col_l:
+        if st.button("🔑 Giriş Yap", use_container_width=True,
+                     type="primary" if st.session_state.auth_page=="login" else "secondary"):
+            st.session_state.auth_page = "login"
+            st.session_state.auth_msg  = ""
             st.rerun()
-        else:
-            st.session_state.login_error = True
+    with col_r:
+        if st.button("📝 Kayıt Ol", use_container_width=True,
+                     type="primary" if st.session_state.auth_page=="register" else "secondary"):
+            st.session_state.auth_page = "register"
+            st.session_state.auth_msg  = ""
             st.rerun()
 
-    if st.session_state.login_error:
-        st.error("❌ Kullanıcı adı veya şifre hatalı")
+    st.markdown("---")
+
+    # ── GİRİŞ FORMU ───────────────────────────────────────────────────────────
+    if st.session_state.auth_page == "login":
+        login_user = st.text_input("👤 Kullanıcı Adı", placeholder="kullanıcı adınız", key="l_user")
+        login_pass = st.text_input("🔒 Şifre", placeholder="••••••••", type="password", key="l_pass")
+        st.markdown(" ")
+        if st.button("Giriş Yap →", use_container_width=True, key="do_login", type="primary"):
+            ok, msg = verify_login(login_user, login_pass)
+            if ok:
+                st.session_state.logged_in = True
+                st.session_state.username  = login_user.strip().lower()
+                st.session_state.auth_msg  = ""
+                st.rerun()
+            else:
+                st.session_state.auth_msg = msg
+                st.rerun()
+        if st.session_state.auth_msg:
+            st.error(f"❌ {st.session_state.auth_msg}")
+
+    # ── KAYIT FORMU ───────────────────────────────────────────────────────────
+    else:
+        reg_user  = st.text_input("👤 Kullanıcı Adı", placeholder="en az 3 karakter", key="r_user")
+        reg_email = st.text_input("📧 E-posta",        placeholder="ornek@mail.com",   key="r_email")
+        reg_pass  = st.text_input("🔒 Şifre",          placeholder="en az 6 karakter", type="password", key="r_pass")
+        reg_pass2 = st.text_input("🔒 Şifre (tekrar)", placeholder="••••••••",          type="password", key="r_pass2")
+        st.markdown(" ")
+        if st.button("Hesap Oluştur →", use_container_width=True, key="do_register", type="primary"):
+            if reg_pass != reg_pass2:
+                st.session_state.auth_msg = "Şifreler eşleşmiyor."
+                st.session_state.auth_ok  = False
+                st.rerun()
+            else:
+                ok, msg = register_user(reg_user, reg_email, reg_pass)
+                st.session_state.auth_msg = msg
+                st.session_state.auth_ok  = ok
+                st.rerun()
+        if st.session_state.auth_msg:
+            if st.session_state.auth_ok:
+                st.success(f"✅ {st.session_state.auth_msg} Giriş yapabilirsiniz.")
+            else:
+                st.error(f"❌ {st.session_state.auth_msg}")
 
     st.markdown("""
-    <div style="text-align:center; color:#2d3f5e; font-size:11px; margin-top:32px;">
-      🔒 Güvenli bağlantı · BorsaRobot AI v2.0
-    </div>
+    <div class="auth-footer">🔒 Güvenli bağlantı · ARD Finans v2.0 · Tüm hakları saklıdır</div>
     """, unsafe_allow_html=True)
 
     st.stop()
@@ -626,8 +747,17 @@ Her bölüm somut ve sayısal olsun. Not: Yatırım tavsiyesi değildir."""
 
 # ─── SIDEBAR ───────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown('<div class="main-header">📈 BorsaRobot</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sub-header">Gemini AI · Yahoo Finance</div>', unsafe_allow_html=True)
+    st.markdown("""
+    <div style="text-align:center; margin-bottom:4px">
+      <span style="font-size:26px; font-weight:900; letter-spacing:-1px; line-height:1">
+        <span style="color:#e02020">ARD</span>
+        <span style="color:#e0e6f0"> F<span style="display:inline-block;width:6px;height:6px;background:#e0e6f0;border-radius:50%;vertical-align:super;margin:0 1px"></span>NANS</span>
+      </span>
+    </div>
+    <div style="text-align:center; color:#4b5a75; font-size:10px; letter-spacing:2px; text-transform:uppercase; margin-bottom:16px;">
+      AI · Powered Trading Platform
+    </div>
+    """, unsafe_allow_html=True)
 
     # Kullanıcı bilgisi
     st.markdown(f"""
