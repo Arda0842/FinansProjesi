@@ -915,8 +915,8 @@ with tab2:
                 )
                 resp = model.generate_content(custom_q)
                 st.markdown(f'<div class="ai-response">{resp.text}</div>', unsafe_allow_html=True)
-                except Exception as e:
-                    st.error(f"Hata: {e}")
+            except Exception as e:
+                st.error(f"Hata: {e}")
 
 # ══ TAB 3: PORTFÖY ═════════════════════════════════════════════════════════════
 with tab3:
