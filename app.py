@@ -761,8 +761,13 @@ AL: {al} | SAT: {sat} | NÖTR: {neutral}
 def ai_analyze_gemini(ticker, df, info, signals, al, sat, neutral, score, api_key):
     genai.configure(api_key=api_key)
 
-    # Model öncelik sırası: en yeni → fallback
-    MODELS = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-1.0-pro"]
+    # Güncel model adları (2025 API)
+    MODELS = [
+        "models/gemini-2.0-flash",
+        "models/gemini-2.0-flash-lite",
+        "models/gemini-1.5-flash-latest",
+        "models/gemini-1.5-flash-8b-latest",
+    ]
     system_prompt = """Sen uzman bir borsa teknik ve temel analiz uzmanısın. Türkçe yanıt ver.
 Analizin bu bölümlerden oluşsun (emojili başlıklar kullan):
 
@@ -784,20 +789,17 @@ Her bölüm somut ve sayısal olsun. Not: Yatırım tavsiyesi değildir."""
         try:
             model = genai.GenerativeModel(model_name=model_name, system_instruction=system_prompt)
             response = model.generate_content(prompt)
-            return f"*[{model_name}]*\n\n" + response.text
+            return f"_{model_name.split('/')[-1]}_\n\n" + response.text
         except Exception as e:
             last_err = e
             err_str = str(e)
-            # Kota hatası → bir sonraki modeli dene
-            if "429" in err_str or "quota" in err_str.lower() or "RESOURCE_EXHAUSTED" in err_str:
+            if "429" in err_str or "quota" in err_str.lower() or "RESOURCE_EXHAUSTED" in err_str or "404" in err_str:
                 continue
-            # Başka hata → direkt fırlat
             raise e
 
     raise Exception(
-        f"Tüm modeller kota limitine ulaştı.\n\n"
-        f"**Çözüm:** Yeni bir Gemini API key alın →\n"
-        f"https://aistudio.google.com/app/apikey\n\n"
+        f"Tüm modeller kullanılamıyor.\n\n"
+        f"**Çözüm:** Yeni API key alın → https://aistudio.google.com/app/apikey\n\n"
         f"Son hata: {last_err}"
     )
 
@@ -1055,20 +1057,26 @@ with tab2:
             try:
                 genai.configure(api_key=st.session_state.gemini_key)
                 sys_inst = "Sen uzman bir borsa analisti ve teknik analiz uzmanısın. Türkçe, net ve somut yanıt ver. Her zaman 'yatırım tavsiyesi değildir' notunu ekle."
+                MODELS_Q  = [
+                    "models/gemini-2.0-flash",
+                    "models/gemini-2.0-flash-lite",
+                    "models/gemini-1.5-flash-latest",
+                    "models/gemini-1.5-flash-8b-latest",
+                ]
                 resp_text = None
-                for m_name in ["gemini-2.0-flash","gemini-1.5-flash","gemini-1.5-flash-8b","gemini-1.0-pro"]:
+                for m_name in MODELS_Q:
                     try:
                         m = genai.GenerativeModel(model_name=m_name, system_instruction=sys_inst)
                         resp_text = m.generate_content(custom_q).text
                         break
                     except Exception as me:
-                        if "429" in str(me) or "quota" in str(me).lower():
+                        if "429" in str(me) or "quota" in str(me).lower() or "404" in str(me):
                             continue
                         raise me
                 if resp_text:
                     st.markdown(f'<div class="ai-response">{resp_text}</div>', unsafe_allow_html=True)
                 else:
-                    st.error("⚠️ Tüm modeller kota limitine ulaştı. Yeni API key alın: https://aistudio.google.com/app/apikey")
+                    st.error("⚠️ Tüm modeller kullanılamıyor. Yeni API key alın: https://aistudio.google.com/app/apikey")
             except Exception as e:
                 st.error(f"Hata: {e}")
 
