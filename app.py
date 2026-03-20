@@ -96,60 +96,9 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ─── LOGIN CSS ─────────────────────────────────────────────────────────────────
-LOGIN_CSS = """
-<style>
-.login-wrap {
-  display: flex; align-items: center; justify-content: center;
-  min-height: 80vh;
-}
-.login-box {
-  background: linear-gradient(145deg, #0d1225, #111827);
-  border: 1px solid #1e2a45;
-  border-radius: 24px;
-  padding: 48px 44px 40px;
-  width: 100%; max-width: 420px;
-  box-shadow: 0 24px 64px rgba(0,0,0,0.6), 0 0 0 1px #ffffff08;
-}
-.login-logo {
-  font-family: 'Space Mono', monospace;
-  font-size: 32px; font-weight: 700; text-align: center;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6, #06b6d4);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  background-clip: text; margin-bottom: 4px;
-}
-.login-sub {
-  text-align: center; color: #4b5a75;
-  font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
-  margin-bottom: 36px;
-}
-.login-label {
-  color: #6b7a99; font-size: 12px; text-transform: uppercase;
-  letter-spacing: 1px; margin-bottom: 6px; display: block;
-}
-.login-err {
-  background: #450a0a; border: 1px solid #dc2626;
-  color: #f87171; border-radius: 10px; padding: 10px 14px;
-  font-size: 13px; margin-top: 12px; text-align: center;
-}
-.login-footer {
-  text-align: center; color: #2d3f5e; font-size: 11px; margin-top: 24px;
-}
-.login-dot {
-  display: inline-block; width: 6px; height: 6px;
-  border-radius: 50%; background: #22c55e;
-  margin-right: 6px; animation: pulse 2s infinite;
-}
-@keyframes pulse {
-  0%,100%{opacity:1;transform:scale(1)}
-  50%{opacity:0.5;transform:scale(1.3)}
-}
-</style>
-"""
-
 # ─── SESSION STATE ──────────────────────────────────────────────────────────────
 for key, default in [("portfolio",[]),("alerts",[]),("gemini_key",""),
-                     ("logged_in", False), ("username", "")]:
+                     ("logged_in", False), ("username", ""), ("login_error", False)]:
     if key not in st.session_state:
         st.session_state[key] = default
 
@@ -166,52 +115,55 @@ def check_login(username: str, password: str) -> bool:
         users = st.secrets["users"]
         return users.get(username) == password
     except:
-        # Secrets yoksa (local test) varsayılan kullanıcı
         return username == "admin" and password == "borsa2024"
 
-def show_login():
-    st.markdown(LOGIN_CSS, unsafe_allow_html=True)
-    st.markdown('<div class="login-wrap">', unsafe_allow_html=True)
-
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        st.markdown("""
-        <div class="login-box">
-          <div class="login-logo">📈 BorsaRobot</div>
-          <div class="login-sub">AI · Powered Trading Platform</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        st.markdown('<span class="login-label">Kullanıcı Adı</span>', unsafe_allow_html=True)
-        username = st.text_input("", placeholder="kullanıcı adınız",
-                                  key="login_user", label_visibility="collapsed")
-
-        st.markdown('<span class="login-label">Şifre</span>', unsafe_allow_html=True)
-        password = st.text_input("", placeholder="••••••••",
-                                  type="password", key="login_pass",
-                                  label_visibility="collapsed")
-
-        st.markdown("<br>", unsafe_allow_html=True)
-        if st.button("Giriş Yap →", use_container_width=True, key="login_btn"):
-            if check_login(username, password):
-                st.session_state.logged_in = True
-                st.session_state.username  = username
-                st.rerun()
-            else:
-                st.markdown('<div class="login-err">❌ Kullanıcı adı veya şifre hatalı</div>',
-                            unsafe_allow_html=True)
-
-        st.markdown("""
-        <div class="login-footer">
-          <span class="login-dot"></span>Güvenli bağlantı · BorsaRobot AI v2.0
-        </div>
-        """, unsafe_allow_html=True)
-
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# ─── GİRİŞ KONTROLÜ ───────────────────────────────────────────────────────────
+# ─── GİRİŞ EKRANI ─────────────────────────────────────────────────────────────
 if not st.session_state.logged_in:
-    show_login()
+    # Sidebar'ı gizle
+    st.markdown("""
+    <style>
+    section[data-testid="stSidebar"] { display: none; }
+    .block-container { max-width: 460px !important; padding-top: 80px !important; }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div style="text-align:center; margin-bottom:8px">
+      <span style="font-family:'Space Mono',monospace; font-size:36px; font-weight:700;
+        background:linear-gradient(135deg,#3b82f6,#8b5cf6,#06b6d4);
+        -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+        background-clip:text;">📈 BorsaRobot</span>
+    </div>
+    <div style="text-align:center; color:#4b5a75; font-size:12px;
+      letter-spacing:2px; text-transform:uppercase; margin-bottom:40px;">
+      AI · Powered Trading Platform
+    </div>
+    """, unsafe_allow_html=True)
+
+    username = st.text_input("👤 Kullanıcı Adı", placeholder="kullanıcı adınız", key="login_user")
+    password = st.text_input("🔒 Şifre", placeholder="••••••••", type="password", key="login_pass")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    if st.button("Giriş Yap →", use_container_width=True, key="login_btn"):
+        if check_login(username, password):
+            st.session_state.logged_in = True
+            st.session_state.username  = username
+            st.session_state.login_error = False
+            st.rerun()
+        else:
+            st.session_state.login_error = True
+            st.rerun()
+
+    if st.session_state.login_error:
+        st.error("❌ Kullanıcı adı veya şifre hatalı")
+
+    st.markdown("""
+    <div style="text-align:center; color:#2d3f5e; font-size:11px; margin-top:32px;">
+      🔒 Güvenli bağlantı · BorsaRobot AI v2.0
+    </div>
+    """, unsafe_allow_html=True)
+
     st.stop()
 
 # ─── VERİ FONKSİYONLARI ────────────────────────────────────────────────────────
