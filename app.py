@@ -108,7 +108,16 @@ from google.oauth2.service_account import Credentials
 def _get_sheet():
     """Google Sheets bağlantısı."""
     try:
-        creds_dict = dict(st.secrets["gcp_service_account"])
+        # Secrets'tan doğru okuma
+        raw = st.secrets["gcp_service_account"]
+        # AttrDict veya dict olabilir, her ikisini de handle et
+        if hasattr(raw, "_asdict"):
+            creds_dict = raw._asdict()
+        elif hasattr(raw, "to_dict"):
+            creds_dict = raw.to_dict()
+        else:
+            creds_dict = dict(raw)
+
         scopes = [
             "https://www.googleapis.com/auth/spreadsheets",
             "https://www.googleapis.com/auth/drive",
