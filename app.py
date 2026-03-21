@@ -99,28 +99,48 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-import hashlib, json, os, re
+import hashlib, json, os, re, gspread
 from pathlib import Path
+from google.oauth2.service_account import Credentials
 
-# ─── KULLANICI VERİTABANI (kalıcı JSON) ────────────────────────────────────────
-USERS_FILE = Path("users_db.json")
+# ─── KULLANICI VERİTABANI (Google Sheets — kalıcı) ─────────────────────────────
+
+@st.cache_resource
+def _get_sheet():
+    """Google Sheets bağlantısı — bir kez açılır, cache'lenir."""
+    try:
+        creds_dict = dict(st.secrets["gcp_service_account"])
+        scopes = [
+            "https://www.googleapis.com/auth/spreadsheets",
+            "https://www.googleapis.com/auth/drive",
+        ]
+        creds  = Credentials.from_service_account_info(creds_dict, scopes=scopes)
+        client = gspread.authorize(creds)
+        sheet  = client.open("ardfinans_users").sheet1
+        return sheet
+    except Exception as e:
+        return None
 
 def _load_users() -> dict:
-    if USERS_FILE.exists():
-        try:
-            return json.loads(USERS_FILE.read_text(encoding="utf-8"))
-        except:
-            return {}
-    return {}
+    sheet = _get_sheet()
+    if sheet is None:
+        return {}
+    try:
+        records = sheet.get_all_records()
+        return {r["username"]: {"email": r["email"], "password": r["password"], "created": r.get("created","")}
+                for r in records if r.get("username")}
+    except:
+        return {}
 
-def _save_users(db: dict):
-    USERS_FILE.write_text(json.dumps(db, ensure_ascii=False, indent=2), encoding="utf-8")
+def _save_user_row(username: str, email: str, pw_hash: str):
+    sheet = _get_sheet()
+    if sheet is None:
+        return
+    from datetime import datetime as dt
+    sheet.append_row([username, email, pw_hash, dt.now().strftime("%Y-%m-%d %H:%M")])
 
 def _hash(pw: str) -> str:
     return hashlib.sha256(pw.encode()).hexdigest()
-
-def user_exists(username: str) -> bool:
-    return username.lower() in _load_users()
 
 def register_user(username: str, email: str, password: str) -> tuple[bool, str]:
     username = username.strip().lower()
@@ -137,12 +157,8 @@ def register_user(username: str, email: str, password: str) -> tuple[bool, str]:
         return False, "Bu kullanıcı adı zaten alınmış."
     if any(v.get("email","").lower() == email.lower() for v in db.values()):
         return False, "Bu e-posta zaten kayıtlı."
-    db[username] = {
-        "email": email,
-        "password": _hash(password),
-        "created": datetime.now().strftime("%Y-%m-%d %H:%M")
-    }
-    _save_users(db)
+    _save_user_row(username, email, _hash(password))
+    _get_sheet.clear()   # cache temizle, yeni kullanıcı görünsün
     return True, "Kayıt başarılı!"
 
 def verify_login(username: str, password: str) -> tuple[bool, str]:
