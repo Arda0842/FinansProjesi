@@ -105,9 +105,8 @@ from google.oauth2.service_account import Credentials
 
 # ─── KULLANICI VERİTABANI (Google Sheets — kalıcı) ─────────────────────────────
 
-@st.cache_resource
 def _get_sheet():
-    """Google Sheets bağlantısı — bir kez açılır, cache'lenir."""
+    """Google Sheets bağlantısı."""
     try:
         creds_dict = dict(st.secrets["gcp_service_account"])
         scopes = [
@@ -167,14 +166,10 @@ def register_user(username: str, email: str, password: str) -> tuple[bool, str]:
     ok = _save_user_row(username, email, _hash(password))
     if not ok:
         return False, "Kayıt sırasında hata oluştu. Lütfen tekrar deneyin."
-    # Cache'i temizle ki yeni kullanıcı hemen görünsün
-    st.cache_resource.clear()
     return True, "Kayıt başarılı!"
 
 def verify_login(username: str, password: str) -> tuple[bool, str]:
     username = username.strip().lower()
-    # Her girişte taze veri çek
-    st.cache_resource.clear()
     db = _load_users()
     if username not in db:
         return False, "Kullanıcı bulunamadı."
