@@ -119,6 +119,7 @@ def _get_sheet():
         sheet  = client.open("ardfinans_users").sheet1
         return sheet
     except Exception as e:
+        st.error(f"🔴 Google Sheets bağlantı hatası: {e}")
         return None
 
 def _load_users() -> dict:
@@ -129,15 +130,21 @@ def _load_users() -> dict:
         records = sheet.get_all_records()
         return {r["username"]: {"email": r["email"], "password": r["password"], "created": r.get("created","")}
                 for r in records if r.get("username")}
-    except:
+    except Exception as e:
+        st.error(f"🔴 Kullanıcı okuma hatası: {e}")
         return {}
 
 def _save_user_row(username: str, email: str, pw_hash: str):
     sheet = _get_sheet()
     if sheet is None:
-        return
-    from datetime import datetime as dt
-    sheet.append_row([username, email, pw_hash, dt.now().strftime("%Y-%m-%d %H:%M")])
+        return False
+    try:
+        from datetime import datetime as dt
+        sheet.append_row([username, email, pw_hash, dt.now().strftime("%Y-%m-%d %H:%M")])
+        return True
+    except Exception as e:
+        st.error(f"🔴 Kayıt yazma hatası: {e}")
+        return False
 
 def _hash(pw: str) -> str:
     return hashlib.sha256(pw.encode()).hexdigest()
@@ -157,12 +164,17 @@ def register_user(username: str, email: str, password: str) -> tuple[bool, str]:
         return False, "Bu kullanıcı adı zaten alınmış."
     if any(v.get("email","").lower() == email.lower() for v in db.values()):
         return False, "Bu e-posta zaten kayıtlı."
-    _save_user_row(username, email, _hash(password))
-    _get_sheet.clear()   # cache temizle, yeni kullanıcı görünsün
+    ok = _save_user_row(username, email, _hash(password))
+    if not ok:
+        return False, "Kayıt sırasında hata oluştu. Lütfen tekrar deneyin."
+    # Cache'i temizle ki yeni kullanıcı hemen görünsün
+    st.cache_resource.clear()
     return True, "Kayıt başarılı!"
 
 def verify_login(username: str, password: str) -> tuple[bool, str]:
     username = username.strip().lower()
+    # Her girişte taze veri çek
+    st.cache_resource.clear()
     db = _load_users()
     if username not in db:
         return False, "Kullanıcı bulunamadı."
