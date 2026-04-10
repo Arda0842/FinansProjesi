@@ -1301,7 +1301,19 @@ if len(hist_df) >= 1:
 
             # Dağılım pasta
             if len(rows) > 1:
-            st.markdown("### Dağılım")
+
+
+
+
+
+
+
+
+
+
+
+            
+                        st.markdown("### Dağılım")
             pal=["#e02020","#3b82f6","#22c55e","#f59e0b","#8b5cf6","#06b6d4","#f472b6","#a3e635"]
             fp=go.Figure(go.Pie(labels=[r["t"] for r in rows],values=[r["v"] for r in rows],
                 hole=0.68,textfont_size=12,
