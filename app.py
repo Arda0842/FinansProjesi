@@ -304,11 +304,129 @@ def verify_login(username, password):
     return True, db[u].get("email","")
 
 # ══════════════════════════════════════════════════════════════════════════════
+# PORTFÖY VERİTABANI (Google Sheets — 2. sayfa)
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _get_portfolio_sheet():
+    """Portföy için Google Sheets 2. sayfasını döner, yoksa oluşturur."""
+    try:
+        raw = st.secrets["gcp_service_account"]
+        if isinstance(raw, str):
+            creds_dict = json.loads(raw)
+        else:
+            creds_dict = {k: v for k, v in raw.items()}
+            if "private_key" in creds_dict:
+                creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
+        scopes = ["https://www.googleapis.com/auth/spreadsheets",
+                  "https://www.googleapis.com/auth/drive"]
+        creds  = Credentials.from_service_account_info(creds_dict, scopes=scopes)
+        client = gspread.authorize(creds)
+        wb     = client.open("ardfinans_users")
+        # 2. sayfa: portfolios
+        try:
+            sheet = wb.worksheet("portfolios")
+        except:
+            sheet = wb.add_worksheet("portfolios", rows=1000, cols=6)
+            sheet.append_row(["username","ticker","qty","cost","added"])
+        return sheet
+    except Exception as e:
+        return None
+
+def _get_history_sheet():
+    """Portföy geçmişi için 3. sayfayı döner, yoksa oluşturur."""
+    try:
+        raw = st.secrets["gcp_service_account"]
+        if isinstance(raw, str):
+            creds_dict = json.loads(raw)
+        else:
+            creds_dict = {k: v for k, v in raw.items()}
+            if "private_key" in creds_dict:
+                creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
+        scopes = ["https://www.googleapis.com/auth/spreadsheets",
+                  "https://www.googleapis.com/auth/drive"]
+        creds  = Credentials.from_service_account_info(creds_dict, scopes=scopes)
+        client = gspread.authorize(creds)
+        wb     = client.open("ardfinans_users")
+        try:
+            sheet = wb.worksheet("pf_history")
+        except:
+            sheet = wb.add_worksheet("pf_history", rows=5000, cols=4)
+            sheet.append_row(["username","date","total_value","total_cost"])
+        return sheet
+    except:
+        return None
+
+def load_portfolio(username):
+    """Kullanıcının portföyünü Sheets'ten yükler."""
+    sheet = _get_portfolio_sheet()
+    if not sheet: return []
+    try:
+        records = sheet.get_all_records()
+        return [{"t": r["ticker"], "q": float(r["qty"]),
+                 "c": float(r["cost"])} for r in records
+                if r.get("username") == username and r.get("ticker")]
+    except: return []
+
+def save_portfolio_item(username, ticker, qty, cost):
+    """Portföye yeni hisse ekler."""
+    sheet = _get_portfolio_sheet()
+    if not sheet: return False
+    try:
+        sheet.append_row([username, ticker, qty, cost,
+                          datetime.now().strftime("%Y-%m-%d %H:%M")])
+        return True
+    except: return False
+
+def delete_portfolio_item(username, ticker):
+    """Portföyden hisse siler."""
+    sheet = _get_portfolio_sheet()
+    if not sheet: return False
+    try:
+        records = sheet.get_all_records()
+        # Satır numarası bul (başlık satırı 1, kayıtlar 2'den başlar)
+        for i, r in enumerate(records):
+            if r.get("username") == username and r.get("ticker") == ticker:
+                sheet.delete_rows(i + 2)  # +2: başlık + 0-index
+                return True
+        return False
+    except: return False
+
+def save_portfolio_snapshot(username, total_value, total_cost):
+    """Günlük portföy değerini kaydeder (günde bir kez)."""
+    sheet = _get_history_sheet()
+    if not sheet: return
+    try:
+        today = datetime.now().strftime("%Y-%m-%d")
+        records = sheet.get_all_records()
+        # Bugün zaten kayıt var mı?
+        for r in records:
+            if r.get("username") == username and r.get("date") == today:
+                return  # Zaten kaydedilmiş
+        sheet.append_row([username, today, round(total_value, 2), round(total_cost, 2)])
+    except: pass
+
+def load_portfolio_history(username):
+    """Kullanıcının portföy geçmişini yükler."""
+    sheet = _get_history_sheet()
+    if not sheet: return pd.DataFrame()
+    try:
+        records = sheet.get_all_records()
+        data = [r for r in records if r.get("username") == username]
+        if not data: return pd.DataFrame()
+        df = pd.DataFrame(data)[["date","total_value","total_cost"]]
+        df["date"] = pd.to_datetime(df["date"])
+        df = df.sort_values("date")
+        df["pl"] = df["total_value"] - df["total_cost"]
+        df["pl_pct"] = (df["pl"] / df["total_cost"] * 100).round(2)
+        return df
+    except: return pd.DataFrame()
+
+# ══════════════════════════════════════════════════════════════════════════════
 # SESSION STATE
 # ══════════════════════════════════════════════════════════════════════════════
 DEFAULTS = dict(portfolio=[], alerts=[], groq_key="", logged_in=False,
                 username="", auth_page="login", auth_msg="", auth_ok=False,
-                splash_done=False)
+                splash_done=False, pf_loaded=False)
 for k, v in DEFAULTS.items():
     if k not in st.session_state: st.session_state[k] = v
 
@@ -462,6 +580,12 @@ if not st.session_state.logged_in:
     </div>
     """, unsafe_allow_html=True)
     st.stop()
+
+# Giriş yapıldıktan sonra portföyü Sheets'ten yükle (bir kez)
+if st.session_state.logged_in and not st.session_state.pf_loaded:
+    with st.spinner("Portföy yükleniyor..."):
+        st.session_state.portfolio = load_portfolio(st.session_state.username)
+        st.session_state.pf_loaded = True
 
 # ══════════════════════════════════════════════════════════════════════════════
 # VERİ FONKSİYONLARI
@@ -853,8 +977,12 @@ with st.sidebar:
     with pc2: pf_cost=st.number_input("Maliyet",min_value=0.0,value=0.0,step=0.1,format="%.2f")
     if st.button("Portföye Ekle",use_container_width=True):
         if pf_t and not any(p["t"]==pf_t for p in st.session_state.portfolio):
-            st.session_state.portfolio.append({"t":pf_t,"q":pf_qty,"c":pf_cost})
-            st.success(f"✓ {pf_t} eklendi")
+            ok = save_portfolio_item(st.session_state.username, pf_t, pf_qty, pf_cost)
+            if ok:
+                st.session_state.portfolio.append({"t":pf_t,"q":pf_qty,"c":pf_cost})
+                st.success(f"✓ {pf_t} eklendi")
+            else:
+                st.error("Kaydedilemedi, tekrar deneyin.")
         elif pf_t: st.warning("Zaten portföyde!")
 
     # Alarm
@@ -1033,7 +1161,7 @@ with tab3:
         <div class="onboard-card">
           <h4>Portföyünüz boş</h4>
           <p>Sol menüden hisse sembolü, adet ve alış maliyetini girerek portföyünüze ekleyin.
-          Gerçek zamanlı fiyatlarla kar/zarar takibi yapılır.</p>
+          Gerçek zamanlı fiyatlarla kar/zarar takibi yapılır. Portföyünüz kalıcı olarak saklanır.</p>
         </div>
         """,unsafe_allow_html=True)
     else:
@@ -1051,6 +1179,10 @@ with tab3:
 
         if rows:
             tpl=tv-tc; tplp=tpl/tc*100 if tc>0 else 0
+
+            # Günlük snapshot kaydet
+            save_portfolio_snapshot(st.session_state.username, tv, tc)
+
             m1,m2,m3,m4=st.columns(4)
             m1.metric("Toplam Değer",f"${tv:,.2f}")
             m2.metric("Toplam Maliyet",f"${tc:,.2f}")
@@ -1058,6 +1190,7 @@ with tab3:
             m4.metric("Pozisyon",f"{len(rows)}")
             st.markdown("---")
 
+            # Hisse tablosu
             hcols=st.columns([1.5,0.6,0.9,0.9,0.9,1.1,1.1,1.1,0.4])
             for hc,lbl in zip(hcols,["Hisse","Adet","Alış","Güncel","Değişim","Değer","K/Z","K/Z %",""]):
                 hc.markdown(f"<div style='color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1px;padding-bottom:6px'>{lbl}</div>",unsafe_allow_html=True)
@@ -1066,7 +1199,7 @@ with tab3:
                 cc="#22c55e" if row["chg"]>=0 else "#ef4444"
                 pc2="#22c55e" if row["pl"]>=0 else "#ef4444"
                 cols=st.columns([1.5,0.6,0.9,0.9,0.9,1.1,1.1,1.1,0.4])
-                vals=[f"<b style='color:var(--text)'>{row['t']}</b>",str(row['q']),
+                vals=[f"<b style='color:var(--text)'>{row['t']}</b>",str(int(row['q'])),
                       f"{row['c']:.2f}",f"{row['p']:.2f}",
                       f"<span style='color:{cc}'>{row['chg']:+.2f}%</span>",
                       f"{row['v']:,.2f}",
@@ -1075,10 +1208,91 @@ with tab3:
                 for ci,v in enumerate(vals):
                     cols[ci].markdown(f"<div style='font-family:var(--mono);font-size:12px;padding:8px 0'>{v}</div>",unsafe_allow_html=True)
                 if cols[8].button("✕",key=f"pd{i}"):
-                    st.session_state.portfolio.pop(i); st.rerun()
+                    delete_portfolio_item(st.session_state.username, row["t"])
+                    st.session_state.portfolio = [p for p in st.session_state.portfolio if p["t"] != row["t"]]
+                    st.rerun()
                 st.markdown("<hr style='margin:0;border-color:#0d1420'>",unsafe_allow_html=True)
 
-            if len(rows)>1:
+            st.markdown("---")
+
+            # ── GÜNDELİK PERFORMANS GRAFİĞİ ──────────────────────────────────
+            hist_df = load_portfolio_history(st.session_state.username)
+            if not hist_df.empty and len(hist_df) > 1:
+                st.markdown("### Portföy Performansı")
+
+                tab_g1, tab_g2 = st.tabs(["📈 Portföy Değeri", "💰 Kar / Zarar"])
+
+                with tab_g1:
+                    fg = go.Figure()
+                    fg.add_trace(go.Scatter(
+                        x=hist_df["date"], y=hist_df["total_value"],
+                        name="Portföy Değeri",
+                        line=dict(color="#3b82f6", width=2),
+                        fill="tozeroy", fillcolor="rgba(59,130,246,0.08)",
+                        mode="lines+markers",
+                        marker=dict(size=5, color="#3b82f6"),
+                        hovertemplate="<b>%{x|%d %b %Y}</b><br>Değer: $%{y:,.2f}<extra></extra>"
+                    ))
+                    fg.add_trace(go.Scatter(
+                        x=hist_df["date"], y=hist_df["total_cost"],
+                        name="Maliyet",
+                        line=dict(color="#4a5a78", width=1.5, dash="dot"),
+                        mode="lines",
+                        hovertemplate="<b>%{x|%d %b %Y}</b><br>Maliyet: $%{y:,.2f}<extra></extra>"
+                    ))
+                    fg.update_layout(
+                        paper_bgcolor="#070b14", plot_bgcolor="#0d1420",
+                        font=dict(color="#4a5a78", family="Sora"),
+                        height=300, margin=dict(l=8,r=8,t=20,b=8),
+                        hovermode="x unified",
+                        hoverlabel=dict(bgcolor="#111c2e", bordercolor="#1a2840", font_color="#e8edf5"),
+                        legend=dict(bgcolor="#0d1420", bordercolor="#1a2840", borderwidth=1,
+                                    font=dict(size=11, color="#8899b0")),
+                        xaxis=dict(gridcolor="#0f1926", zerolinecolor="#0f1926"),
+                        yaxis=dict(gridcolor="#0f1926", zerolinecolor="#0f1926", tickprefix="$")
+                    )
+                    st.plotly_chart(fg, use_container_width=True)
+
+                with tab_g2:
+                    colors = ["#22c55e" if v >= 0 else "#ef4444" for v in hist_df["pl"]]
+                    fpl = go.Figure()
+                    fpl.add_trace(go.Bar(
+                        x=hist_df["date"], y=hist_df["pl"],
+                        name="Kar/Zarar",
+                        marker_color=colors,
+                        hovertemplate="<b>%{x|%d %b %Y}</b><br>K/Z: $%{y:+,.2f}<extra></extra>"
+                    ))
+                    fpl.add_trace(go.Scatter(
+                        x=hist_df["date"], y=hist_df["pl_pct"],
+                        name="K/Z %",
+                        line=dict(color="#f59e0b", width=2),
+                        mode="lines+markers",
+                        marker=dict(size=5),
+                        yaxis="y2",
+                        hovertemplate="<b>%{x|%d %b %Y}</b><br>K/Z: %{y:+.2f}%<extra></extra>"
+                    ))
+                    fpl.update_layout(
+                        paper_bgcolor="#070b14", plot_bgcolor="#0d1420",
+                        font=dict(color="#4a5a78", family="Sora"),
+                        height=300, margin=dict(l=8,r=8,t=20,b=8),
+                        hovermode="x unified",
+                        hoverlabel=dict(bgcolor="#111c2e", bordercolor="#1a2840", font_color="#e8edf5"),
+                        legend=dict(bgcolor="#0d1420", bordercolor="#1a2840", borderwidth=1,
+                                    font=dict(size=11, color="#8899b0")),
+                        xaxis=dict(gridcolor="#0f1926", zerolinecolor="#0f1926"),
+                        yaxis=dict(gridcolor="#0f1926", zerolinecolor="#0f1926", tickprefix="$"),
+                        yaxis2=dict(overlaying="y", side="right", ticksuffix="%",
+                                    gridcolor="#0f1926", zerolinecolor="#1a2840")
+                    )
+                    st.plotly_chart(fpl, use_container_width=True)
+            elif not hist_df.empty and len(hist_df) == 1:
+                st.info("📊 Grafik için en az 2 günlük veri gerekiyor. Yarın tekrar kontrol edin!")
+            else:
+                st.info("📊 Portföy performans grafiği birkaç gün sonra burada görünecek.")
+
+            # Dağılım pasta
+            if len(rows) > 1:
+                st.markdown("### Dağılım")
                 pal=["#e02020","#3b82f6","#22c55e","#f59e0b","#8b5cf6","#06b6d4","#f472b6","#a3e635"]
                 fp=go.Figure(go.Pie(labels=[r["t"] for r in rows],values=[r["v"] for r in rows],
                     hole=0.68,textfont_size=12,
