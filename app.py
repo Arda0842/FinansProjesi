@@ -415,7 +415,7 @@ def load_portfolio_history(username):
         if not data: return pd.DataFrame()
         df = pd.DataFrame(data)[["date","total_value","total_cost"]]
         df["date"] = pd.to_datetime(df["date"])
-        df = df.sort_values("date")
+        df = df.sort_values("date").drop_duplicates(subset="date")
         df["pl"] = df["total_value"] - df["total_cost"]
         df["pl_pct"] = (df["pl"] / df["total_cost"] * 100).round(2)
         return df
@@ -1216,79 +1216,88 @@ with tab3:
             st.markdown("---")
 
             # ── GÜNDELİK PERFORMANS GRAFİĞİ ──────────────────────────────────
-            hist_df = load_portfolio_history(st.session_state.username)
-            if not hist_df.empty and len(hist_df) > 1:
-                st.markdown("### Portföy Performansı")
+            # ── GÜNDELİK PERFORMANS GRAFİĞİ ──────────────────────────────────
+hist_df = load_portfolio_history(st.session_state.username)
 
-                tab_g1, tab_g2 = st.tabs(["📈 Portföy Değeri", "💰 Kar / Zarar"])
+# Bugünkü anlık değeri son nokta olarak ekle (geçmişte yoksa)
+today_str = pd.Timestamp(datetime.now().date())
+if hist_df.empty or hist_df["date"].max() < today_str:
+    today_row = pd.DataFrame([{
+        "date": today_str,
+        "total_value": round(tv, 2),
+        "total_cost": round(tc, 2),
+        "pl": round(tv - tc, 2),
+        "pl_pct": round((tv - tc) / tc * 100, 2) if tc > 0 else 0.0
+    }])
+    hist_df = pd.concat([hist_df, today_row], ignore_index=True).sort_values("date")
 
-                with tab_g1:
-                    fg = go.Figure()
-                    fg.add_trace(go.Scatter(
-                        x=hist_df["date"], y=hist_df["total_value"],
-                        name="Portföy Değeri",
-                        line=dict(color="#3b82f6", width=2),
-                        fill="tozeroy", fillcolor="rgba(59,130,246,0.08)",
-                        mode="lines+markers",
-                        marker=dict(size=5, color="#3b82f6"),
-                        hovertemplate="<b>%{x|%d %b %Y}</b><br>Değer: $%{y:,.2f}<extra></extra>"
-                    ))
-                    fg.add_trace(go.Scatter(
-                        x=hist_df["date"], y=hist_df["total_cost"],
-                        name="Maliyet",
-                        line=dict(color="#4a5a78", width=1.5, dash="dot"),
-                        mode="lines",
-                        hovertemplate="<b>%{x|%d %b %Y}</b><br>Maliyet: $%{y:,.2f}<extra></extra>"
-                    ))
-                    fg.update_layout(
-                        paper_bgcolor="#070b14", plot_bgcolor="#0d1420",
-                        font=dict(color="#4a5a78", family="Sora"),
-                        height=300, margin=dict(l=8,r=8,t=20,b=8),
-                        hovermode="x unified",
-                        hoverlabel=dict(bgcolor="#111c2e", bordercolor="#1a2840", font_color="#e8edf5"),
-                        legend=dict(bgcolor="#0d1420", bordercolor="#1a2840", borderwidth=1,
-                                    font=dict(size=11, color="#8899b0")),
-                        xaxis=dict(gridcolor="#0f1926", zerolinecolor="#0f1926"),
-                        yaxis=dict(gridcolor="#0f1926", zerolinecolor="#0f1926", tickprefix="$")
-                    )
-                    st.plotly_chart(fg, use_container_width=True)
+if len(hist_df) >= 1:
+    st.markdown("### Portföy Performansı")
+    tab_g1, tab_g2 = st.tabs(["📈 Portföy Değeri", "💰 Kar / Zarar"])
 
-                with tab_g2:
-                    colors = ["#22c55e" if v >= 0 else "#ef4444" for v in hist_df["pl"]]
-                    fpl = go.Figure()
-                    fpl.add_trace(go.Bar(
-                        x=hist_df["date"], y=hist_df["pl"],
-                        name="Kar/Zarar",
-                        marker_color=colors,
-                        hovertemplate="<b>%{x|%d %b %Y}</b><br>K/Z: $%{y:+,.2f}<extra></extra>"
-                    ))
-                    fpl.add_trace(go.Scatter(
-                        x=hist_df["date"], y=hist_df["pl_pct"],
-                        name="K/Z %",
-                        line=dict(color="#f59e0b", width=2),
-                        mode="lines+markers",
-                        marker=dict(size=5),
-                        yaxis="y2",
-                        hovertemplate="<b>%{x|%d %b %Y}</b><br>K/Z: %{y:+.2f}%<extra></extra>"
-                    ))
-                    fpl.update_layout(
-                        paper_bgcolor="#070b14", plot_bgcolor="#0d1420",
-                        font=dict(color="#4a5a78", family="Sora"),
-                        height=300, margin=dict(l=8,r=8,t=20,b=8),
-                        hovermode="x unified",
-                        hoverlabel=dict(bgcolor="#111c2e", bordercolor="#1a2840", font_color="#e8edf5"),
-                        legend=dict(bgcolor="#0d1420", bordercolor="#1a2840", borderwidth=1,
-                                    font=dict(size=11, color="#8899b0")),
-                        xaxis=dict(gridcolor="#0f1926", zerolinecolor="#0f1926"),
-                        yaxis=dict(gridcolor="#0f1926", zerolinecolor="#0f1926", tickprefix="$"),
-                        yaxis2=dict(overlaying="y", side="right", ticksuffix="%",
-                                    gridcolor="#0f1926", zerolinecolor="#1a2840")
-                    )
-                    st.plotly_chart(fpl, use_container_width=True)
-            elif not hist_df.empty and len(hist_df) == 1:
-                st.info("📊 Grafik için en az 2 günlük veri gerekiyor. Yarın tekrar kontrol edin!")
-            else:
-                st.info("📊 Portföy performans grafiği birkaç gün sonra burada görünecek.")
+    with tab_g1:
+        fg = go.Figure()
+        fg.add_trace(go.Scatter(
+            x=hist_df["date"], y=hist_df["total_value"],
+            name="Portföy Değeri",
+            line=dict(color="#3b82f6", width=2),
+            fill="tozeroy", fillcolor="rgba(59,130,246,0.08)",
+            mode="lines+markers",
+            marker=dict(size=5, color="#3b82f6"),
+            hovertemplate="<b>%{x|%d %b %Y}</b><br>Değer: $%{y:,.2f}<extra></extra>"
+        ))
+        fg.add_trace(go.Scatter(
+            x=hist_df["date"], y=hist_df["total_cost"],
+            name="Maliyet",
+            line=dict(color="#4a5a78", width=1.5, dash="dot"),
+            mode="lines",
+            hovertemplate="<b>%{x|%d %b %Y}</b><br>Maliyet: $%{y:,.2f}<extra></extra>"
+        ))
+        fg.update_layout(
+            paper_bgcolor="#070b14", plot_bgcolor="#0d1420",
+            font=dict(color="#4a5a78", family="Sora"),
+            height=300, margin=dict(l=8,r=8,t=20,b=8),
+            hovermode="x unified",
+            hoverlabel=dict(bgcolor="#111c2e", bordercolor="#1a2840", font_color="#e8edf5"),
+            legend=dict(bgcolor="#0d1420", bordercolor="#1a2840", borderwidth=1,
+                        font=dict(size=11, color="#8899b0")),
+            xaxis=dict(gridcolor="#0f1926", zerolinecolor="#0f1926"),
+            yaxis=dict(gridcolor="#0f1926", zerolinecolor="#0f1926", tickprefix="$")
+        )
+        st.plotly_chart(fg, use_container_width=True)
+
+    with tab_g2:
+        colors = ["#22c55e" if v >= 0 else "#ef4444" for v in hist_df["pl"]]
+        fpl = go.Figure()
+        fpl.add_trace(go.Bar(
+            x=hist_df["date"], y=hist_df["pl"],
+            name="Kar/Zarar",
+            marker_color=colors,
+            hovertemplate="<b>%{x|%d %b %Y}</b><br>K/Z: $%{y:+,.2f}<extra></extra>"
+        ))
+        fpl.add_trace(go.Scatter(
+            x=hist_df["date"], y=hist_df["pl_pct"],
+            name="K/Z %",
+            line=dict(color="#f59e0b", width=2),
+            mode="lines+markers",
+            marker=dict(size=5),
+            yaxis="y2",
+            hovertemplate="<b>%{x|%d %b %Y}</b><br>K/Z: %{y:+.2f}%<extra></extra>"
+        ))
+        fpl.update_layout(
+            paper_bgcolor="#070b14", plot_bgcolor="#0d1420",
+            font=dict(color="#4a5a78", family="Sora"),
+            height=300, margin=dict(l=8,r=8,t=20,b=8),
+            hovermode="x unified",
+            hoverlabel=dict(bgcolor="#111c2e", bordercolor="#1a2840", font_color="#e8edf5"),
+            legend=dict(bgcolor="#0d1420", bordercolor="#1a2840", borderwidth=1,
+                        font=dict(size=11, color="#8899b0")),
+            xaxis=dict(gridcolor="#0f1926", zerolinecolor="#0f1926"),
+            yaxis=dict(gridcolor="#0f1926", zerolinecolor="#0f1926", tickprefix="$"),
+            yaxis2=dict(overlaying="y", side="right", ticksuffix="%",
+                        gridcolor="#0f1926", zerolinecolor="#1a2840")
+        )
+        st.plotly_chart(fpl, use_container_width=True)
 
             # Dağılım pasta
             if len(rows) > 1:
