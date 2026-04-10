@@ -1301,18 +1301,17 @@ if len(hist_df) >= 1:
 
             # Dağılım pasta
             if len(rows) > 1:
-                st.markdown("### Dağılım")
-                pal=["#e02020","#3b82f6","#22c55e","#f59e0b","#8b5cf6","#06b6d4","#f472b6","#a3e635"]
-                fp=go.Figure(go.Pie(labels=[r["t"] for r in rows],values=[r["v"] for r in rows],
-                    hole=0.68,textfont_size=12,
-                    marker=dict(colors=pal[:len(rows)],line=dict(color="#070b14",width=2))))
-                fp.add_annotation(text=f"<b>${tv:,.0f}</b>",font=dict(size=14,color="#e8edf5"),showarrow=False)
-                fp.update_layout(paper_bgcolor="#070b14",plot_bgcolor="#070b14",
-                    font=dict(color="#8899b0"),height=280,
-                    legend=dict(bgcolor="#0d1420",bordercolor="#1a2840"),
-                    margin=dict(l=0,r=0,t=20,b=0))
-                st.plotly_chart(fp,use_container_width=True)
-
+            st.markdown("### Dağılım")
+            pal=["#e02020","#3b82f6","#22c55e","#f59e0b","#8b5cf6","#06b6d4","#f472b6","#a3e635"]
+            fp=go.Figure(go.Pie(labels=[r["t"] for r in rows],values=[r["v"] for r in rows],
+                hole=0.68,textfont_size=12,
+                marker=dict(colors=pal[:len(rows)],line=dict(color="#070b14",width=2))))
+            fp.add_annotation(text=f"<b>${tv:,.0f}</b>",font=dict(size=14,color="#e8edf5"),showarrow=False)
+            fp.update_layout(paper_bgcolor="#070b14",plot_bgcolor="#070b14",
+                font=dict(color="#8899b0"),height=280,
+                legend=dict(bgcolor="#0d1420",bordercolor="#1a2840"),
+                margin=dict(l=0,r=0,t=20,b=0))
+            st.plotly_chart(fp,use_container_width=True)
 # ── TAB 4: ALARMLAR ────────────────────────────────────────────────────────────
 with tab4:
     st.markdown("### Fiyat Alarmları")
