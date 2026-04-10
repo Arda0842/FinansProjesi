@@ -51,19 +51,16 @@ html, body, [class*="css"] {
 }
 .stApp { background: var(--bg); }
 
-/* ── Scrollbar ── */
 ::-webkit-scrollbar { width:4px; height:4px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius:2px; }
 
-/* ── Sidebar ── */
 section[data-testid="stSidebar"] {
   background: var(--surface) !important;
   border-right: 1px solid var(--border) !important;
 }
 section[data-testid="stSidebar"] > div { padding-top: 0 !important; }
 
-/* ── Metrikler ── */
 [data-testid="stMetric"] {
   background: var(--card); border: 1px solid var(--border);
   border-radius: 10px; padding: 14px 16px;
@@ -72,7 +69,6 @@ section[data-testid="stSidebar"] > div { padding-top: 0 !important; }
 [data-testid="stMetricValue"] { color: var(--text) !important; font-family: var(--mono) !important; font-size:18px !important; }
 [data-testid="stMetricDelta"] { font-family: var(--mono) !important; font-size:11px !important; }
 
-/* ── Tabs ── */
 .stTabs [data-baseweb="tab-list"] {
   background: var(--surface); border-radius:8px; padding:3px; gap:2px;
   border: 1px solid var(--border);
@@ -86,7 +82,6 @@ section[data-testid="stSidebar"] > div { padding-top: 0 !important; }
   border: 1px solid var(--border) !important;
 }
 
-/* ── Butonlar ── */
 .stButton > button {
   background: var(--accent); color: #fff; border: none;
   border-radius: 8px; font-family: var(--sans); font-weight: 600;
@@ -106,7 +101,6 @@ section[data-testid="stSidebar"] > div { padding-top: 0 !important; }
   box-shadow: none; transform: none;
 }
 
-/* ── Input ── */
 .stTextInput > div > div > input,
 .stNumberInput > div > div > input {
   background: var(--surface) !important;
@@ -124,7 +118,6 @@ section[data-testid="stSidebar"] > div { padding-top: 0 !important; }
   text-transform: uppercase; letter-spacing: 1px;
 }
 
-/* ── Select / Multiselect ── */
 .stSelectbox > div > div,
 .stMultiSelect > div > div {
   background: var(--surface) !important;
@@ -132,33 +125,22 @@ section[data-testid="stSidebar"] > div { padding-top: 0 !important; }
   border-radius: 8px !important; color: var(--text) !important;
 }
 
-/* ── Divider ── */
 hr { border-color: var(--border); margin: 12px 0; }
-
-/* ── Alert ── */
 .stAlert { background: var(--card) !important; border: 1px solid var(--border) !important; border-radius: 8px; }
 
-/* ── Expander ── */
 .streamlit-expanderHeader {
   background: var(--card) !important; border: 1px solid var(--border) !important;
   border-radius: 8px !important; color: var(--text) !important;
   font-size: 13px !important;
 }
 
-/* ── Dataframe ── */
 .stDataFrame { border: 1px solid var(--border) !important; border-radius: 8px; overflow: hidden; }
-
-/* ── Toast ── */
 [data-testid="stToast"] { background: var(--card) !important; border: 1px solid var(--border) !important; }
 
-/* ═══ ÖZEL BİLEŞENLER ═══ */
-
-/* Sinyal badge */
 .badge-buy    { background:#052e16; color:#4ade80; border:1px solid #16a34a; border-radius:5px; padding:1px 8px; font-size:11px; font-family:var(--mono); font-weight:600; white-space:nowrap; }
 .badge-sell   { background:#2d0707; color:#f87171; border:1px solid #dc2626; border-radius:5px; padding:1px 8px; font-size:11px; font-family:var(--mono); font-weight:600; white-space:nowrap; }
 .badge-neutral{ background:#1c1917; color:#78716c; border:1px solid #44403c; border-radius:5px; padding:1px 8px; font-size:11px; font-family:var(--mono); font-weight:600; white-space:nowrap; }
 
-/* Sinyal kart */
 .sig-card {
   background: var(--card); border: 1px solid var(--border);
   border-radius: 10px; padding: 12px 10px; text-align: center;
@@ -168,7 +150,6 @@ hr { border-color: var(--border); margin: 12px 0; }
 .sig-label { color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
 .sig-desc  { color: var(--muted); font-size: 9px; margin-top: 5px; line-height: 1.3; }
 
-/* AI yanıt */
 .ai-box {
   background: var(--card); border: 1px solid var(--border);
   border-left: 3px solid var(--accent); border-radius: 10px;
@@ -176,7 +157,6 @@ hr { border-color: var(--border); margin: 12px 0; }
   color: #c5cfe0; margin-top: 12px; white-space: pre-wrap;
 }
 
-/* Portföy satır */
 .pf-row {
   background: var(--card); border: 1px solid var(--border);
   border-radius: 8px; padding: 12px 16px; margin-bottom: 6px;
@@ -184,7 +164,6 @@ hr { border-color: var(--border); margin: 12px 0; }
 }
 .pf-row:hover { border-color: #2d3f5e; }
 
-/* Onboarding kartı */
 .onboard-card {
   background: var(--card); border: 1px solid var(--border);
   border-radius: 12px; padding: 20px 24px; margin-bottom: 12px;
@@ -197,14 +176,12 @@ hr { border-color: var(--border); margin: 12px 0; }
   color: #fff; font-size: 11px; font-weight: 700; margin-right: 8px; flex-shrink: 0;
 }
 
-/* Fiyat header */
 .price-header {
   background: var(--card); border: 1px solid var(--border);
   border-radius: 12px; padding: 16px 20px; margin-bottom: 16px;
   display: flex; flex-wrap: wrap; align-items: center; gap: 16px;
 }
 
-/* Groq badge */
 .groq-badge {
   display: inline-flex; align-items: center; gap: 6px;
   background: var(--card); border: 1px solid var(--border);
@@ -214,7 +191,6 @@ hr { border-color: var(--border); margin: 12px 0; }
 }
 .groq-dot { width:6px; height:6px; border-radius:50%; background:var(--green); }
 
-/* Footer */
 .footer-bar {
   margin-top: 40px; padding: 16px 20px;
   background: var(--surface); border-top: 1px solid var(--border);
@@ -222,7 +198,6 @@ hr { border-color: var(--border); margin: 12px 0; }
   color: var(--muted); font-size: 11px; line-height: 1.7;
 }
 
-/* Sidebar logo */
 .sb-logo {
   padding: 20px 16px 14px;
   border-bottom: 1px solid var(--border);
@@ -308,7 +283,6 @@ def verify_login(username, password):
 # ══════════════════════════════════════════════════════════════════════════════
 
 def _get_portfolio_sheet():
-    """Portföy için Google Sheets 2. sayfasını döner, yoksa oluşturur."""
     try:
         raw = st.secrets["gcp_service_account"]
         if isinstance(raw, str):
@@ -322,7 +296,6 @@ def _get_portfolio_sheet():
         creds  = Credentials.from_service_account_info(creds_dict, scopes=scopes)
         client = gspread.authorize(creds)
         wb     = client.open("ardfinans_users")
-        # 2. sayfa: portfolios
         try:
             sheet = wb.worksheet("portfolios")
         except:
@@ -333,7 +306,6 @@ def _get_portfolio_sheet():
         return None
 
 def _get_history_sheet():
-    """Portföy geçmişi için 3. sayfayı döner, yoksa oluşturur."""
     try:
         raw = st.secrets["gcp_service_account"]
         if isinstance(raw, str):
@@ -357,7 +329,6 @@ def _get_history_sheet():
         return None
 
 def load_portfolio(username):
-    """Kullanıcının portföyünü Sheets'ten yükler."""
     sheet = _get_portfolio_sheet()
     if not sheet: return []
     try:
@@ -368,7 +339,6 @@ def load_portfolio(username):
     except: return []
 
 def save_portfolio_item(username, ticker, qty, cost):
-    """Portföye yeni hisse ekler."""
     sheet = _get_portfolio_sheet()
     if not sheet: return False
     try:
@@ -378,35 +348,30 @@ def save_portfolio_item(username, ticker, qty, cost):
     except: return False
 
 def delete_portfolio_item(username, ticker):
-    """Portföyden hisse siler."""
     sheet = _get_portfolio_sheet()
     if not sheet: return False
     try:
         records = sheet.get_all_records()
-        # Satır numarası bul (başlık satırı 1, kayıtlar 2'den başlar)
         for i, r in enumerate(records):
             if r.get("username") == username and r.get("ticker") == ticker:
-                sheet.delete_rows(i + 2)  # +2: başlık + 0-index
+                sheet.delete_rows(i + 2)
                 return True
         return False
     except: return False
 
 def save_portfolio_snapshot(username, total_value, total_cost):
-    """Günlük portföy değerini kaydeder (günde bir kez)."""
     sheet = _get_history_sheet()
     if not sheet: return
     try:
         today = datetime.now().strftime("%Y-%m-%d")
         records = sheet.get_all_records()
-        # Bugün zaten kayıt var mı?
         for r in records:
             if r.get("username") == username and r.get("date") == today:
-                return  # Zaten kaydedilmiş
+                return
         sheet.append_row([username, today, round(total_value, 2), round(total_cost, 2)])
     except: pass
 
 def load_portfolio_history(username):
-    """Kullanıcının portföy geçmişini yükler."""
     sheet = _get_history_sheet()
     if not sheet: return pd.DataFrame()
     try:
@@ -512,7 +477,6 @@ if not st.session_state.logged_in:
     </style>
     """, unsafe_allow_html=True)
 
-    # Logo
     st.markdown("""
     <div style="text-align:center;margin-bottom:28px">
       <div style="font-size:36px;font-weight:800;letter-spacing:-1px;margin-bottom:6px">
@@ -528,7 +492,6 @@ if not st.session_state.logged_in:
     </div>
     """, unsafe_allow_html=True)
 
-    # Tab seçici
     c1, c2 = st.columns(2)
     with c1:
         if st.button("Giriş Yap", use_container_width=True,
@@ -662,8 +625,8 @@ def calc(df):
     df["OBV"]=obv
 
     df["WR"]=-100*(h14-c)/(h14-l14+1e-9)
-    tp=(h+l+c)/3; st=tp.rolling(20).mean(); md=tp.rolling(20).apply(lambda x:np.mean(np.abs(x-x.mean())))
-    df["CCI"]=(tp-st)/(0.015*md+1e-9)
+    tp=(h+l+c)/3; st2=tp.rolling(20).mean(); md=tp.rolling(20).apply(lambda x:np.mean(np.abs(x-x.mean())))
+    df["CCI"]=(tp-st2)/(0.015*md+1e-9)
 
     mf=tp*v
     df["MFI"]=100-100/(1+mf.where(tp>tp.shift(),0).rolling(14).sum()/(mf.where(tp<tp.shift(),0).rolling(14).sum()+1e-9))
@@ -695,8 +658,8 @@ def signals(df):
     m=float(row.get("MACD",0)); ms=float(row.get("MACD_S",0)); mh=float(row.get("MACD_H",0))
     s("MACD",m>ms and mh>0,m<ms and mh<0,"Pozitif kesişim ↑","Negatif kesişim ↓","Nötr bölge")
 
-    c=float(row["Close"]); bu=float(row.get("BB_U",0)); bl=float(row.get("BB_L",0))
-    s("Bollinger",c<bl,c>bu,"Alt banda yakın","Üst banda yakın","Bant ortası")
+    c2=float(row["Close"]); bu=float(row.get("BB_U",0)); bl=float(row.get("BB_L",0))
+    s("Bollinger",c2<bl,c2>bu,"Alt banda yakın","Üst banda yakın","Bant ortası")
 
     e20=float(row.get("EMA20",0)); e50=float(row.get("EMA50",0)); e200=float(row.get("EMA200",0))
     s("EMA 20/50",e20>e50,e20<e50,"EMA20 > EMA50","EMA20 < EMA50")
@@ -705,8 +668,8 @@ def signals(df):
     k=float(row.get("StochK",50)); d=float(row.get("StochD",50))
     s("Stochastic",k<20 and k>d,k>80 and k<d,f"K={k:.0f} Aşırı satım",f"K={k:.0f} Aşırı alım",f"K={k:.0f}")
 
-    adx=float(row.get("ADX",0)); dp=float(row.get("DI+",0)); dm=float(row.get("DI-",0))
-    s("ADX",adx>25 and dp>dm,adx>25 and dp<dm,f"ADX {adx:.0f} — Güçlü ↑",f"ADX {adx:.0f} — Güçlü ↓",f"ADX {adx:.0f} — Zayıf")
+    adx=float(row.get("ADX",0)); dp2=float(row.get("DI+",0)); dm2=float(row.get("DI-",0))
+    s("ADX",adx>25 and dp2>dm2,adx>25 and dp2<dm2,f"ADX {adx:.0f} — Güçlü ↑",f"ADX {adx:.0f} — Güçlü ↓",f"ADX {adx:.0f} — Zayıf")
 
     mfi=float(row.get("MFI",50))
     s("MFI",mfi<20,mfi>80,f"MFI {mfi:.0f} — Para girişi",f"MFI {mfi:.0f} — Para çıkışı",f"MFI {mfi:.0f}")
@@ -721,7 +684,7 @@ def signals(df):
     s("CCI",cci<-100,cci>100,f"CCI {cci:.0f} — Aşırı satım",f"CCI {cci:.0f} — Aşırı alım",f"CCI {cci:.0f}")
 
     vwap=float(row.get("VWAP",0))
-    s("VWAP",c>vwap,c<vwap,"Fiyat VWAP üstünde","Fiyat VWAP altında","VWAP yakını")
+    s("VWAP",c2>vwap,c2<vwap,"Fiyat VWAP üstünde","Fiyat VWAP altında","VWAP yakını")
 
     roc=float(row.get("ROC",0))
     s("ROC(10)",roc>2,roc<-2,f"ROC {roc:.1f}% momentum ↑",f"ROC {roc:.1f}% momentum ↓",f"ROC {roc:.1f}%")
@@ -776,8 +739,8 @@ def chart(df, ticker, inds):
     if "RSI" in inds and "RSI" in df.columns:
         fig.add_trace(go.Scatter(x=df.index,y=df["RSI"],name="RSI",
             line=dict(color="#38bdf8",width=1.5),fill="tozeroy",fillcolor="rgba(56,189,248,0.04)"),row=cr,col=1)
-        for y,c2 in [(70,"#ef4444"),(50,"#1e293b"),(30,"#22c55e")]:
-            fig.add_hline(y=y,line_dash="dot",line_color=c2,line_width=1,row=cr,col=1)
+        for y,c3 in [(70,"#ef4444"),(50,"#1e293b"),(30,"#22c55e")]:
+            fig.add_hline(y=y,line_dash="dot",line_color=c3,line_width=1,row=cr,col=1)
         cr+=1
     if "MACD" in inds and "MACD" in df.columns:
         hc=["#22c55e" if v>=0 else "#ef4444" for v in df["MACD_H"]]
@@ -922,7 +885,6 @@ def send_email(to, ticker, atype, target, current):
 # SIDEBAR
 # ══════════════════════════════════════════════════════════════════════════════
 with st.sidebar:
-    # Logo
     st.markdown(f"""
     <div class="sb-logo">
       <div class="sb-logo-text">
@@ -948,7 +910,6 @@ with st.sidebar:
     if st.button("Çıkış Yap", use_container_width=True, type="secondary"):
         st.session_state.logged_in=False; st.session_state.username=""; st.rerun()
 
-    # Hisse arama
     st.markdown('<div class="sb-section-title">📈 Hisse Analizi</div>', unsafe_allow_html=True)
     raw = st.text_input("Sembol", value="AAPL", placeholder="AAPL · THYAO · BTC-USD", label_visibility="visible").upper().strip()
     ticker_input = resolve(raw)
@@ -959,7 +920,6 @@ with st.sidebar:
     with c1: period=st.selectbox("Dönem",["5d","1mo","3mo","6mo","1y","2y","5y"],index=2)
     with c2: interval=st.selectbox("Aralık",["1d","1wk","1h","30m","15m","5m"],index=0)
 
-    # İndikatörler
     st.markdown('<div class="sb-section-title">📊 İndikatörler</div>', unsafe_allow_html=True)
     overlay=st.multiselect("Grafik üzeri",
         ["BB","EMA20","EMA50","EMA200","EMA9","EMA100","SMA20","SMA50","SMA200","VWAP"],
@@ -967,7 +927,6 @@ with st.sidebar:
     panels=st.multiselect("Alt paneller",["RSI","MACD","Hacim","ADX"],default=["RSI","MACD","Hacim"])
     selected=overlay+panels
 
-    # Portföy
     st.markdown('<div class="sb-section-title">💼 Portföy</div>', unsafe_allow_html=True)
     pf_raw=st.text_input("Sembol",key="pf",placeholder="AAPL · GARAN").upper().strip()
     pf_t=resolve(pf_raw)
@@ -985,7 +944,6 @@ with st.sidebar:
                 st.error("Kaydedilemedi, tekrar deneyin.")
         elif pf_t: st.warning("Zaten portföyde!")
 
-    # Alarm
     st.markdown('<div class="sb-section-title">🔔 Fiyat Alarmı</div>', unsafe_allow_html=True)
     al_raw=st.text_input("Sembol",key="al",placeholder="TSLA · THYAO").upper()
     al_t=resolve(al_raw)
@@ -1013,7 +971,6 @@ with tab1:
             info=get_info(ticker_input)
 
         if df.empty:
-            # Onboarding yardımı
             st.markdown("""
             <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:16px">
               <div style="font-size:16px;font-weight:600;margin-bottom:12px">❌ Veri bulunamadı</div>
@@ -1033,7 +990,6 @@ with tab1:
             chg=(lc-pc)/pc*100; cc="#22c55e" if chg>=0 else "#ef4444"
             arr="▲" if chg>=0 else "▼"; sc_c="#22c55e" if sc>20 else ("#ef4444" if sc<-20 else "#f59e0b")
 
-            # Fiyat header
             st.markdown(f"""
             <div class="price-header">
               <div>
@@ -1053,7 +1009,6 @@ with tab1:
             </div>
             """, unsafe_allow_html=True)
 
-            # Metrikler
             m1,m2,m3,m4,m5,m6=st.columns(6)
             m1.metric("RSI",f"{float(df['RSI'].iloc[-1]):.1f}")
             m2.metric("ADX",f"{float(df['ADX'].iloc[-1]):.1f}")
@@ -1062,10 +1017,8 @@ with tab1:
             m5.metric("52H Yüksek",f"{info.get('fiftyTwoWeekHigh','—')}")
             m6.metric("Beta",f"{info.get('beta','—')}")
 
-            # Grafik
             st.plotly_chart(chart(df,ticker_input,selected),use_container_width=True,config={"displayModeBar":True})
 
-            # Sinyal grid
             st.markdown("### Sinyal Panosu")
             items=list(S.items())
             for ri in range(0,len(items),6):
@@ -1080,7 +1033,6 @@ with tab1:
                       <div class="sig-desc">{desc}</div>
                     </div>""",unsafe_allow_html=True)
 
-            # Skor bar
             ap=al/len(S)*100; sp=sat/len(S)*100; np2=(len(S)-al-sat)/len(S)*100
             st.markdown(f"""
             <div style="margin:16px 0 8px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
@@ -1165,20 +1117,29 @@ with tab3:
         </div>
         """,unsafe_allow_html=True)
     else:
-        rows=[]; tc=tv=0.0
+        rows=[]
+        tc=0.0
+        tv=0.0
         for item in st.session_state.portfolio:
             try:
                 d=get_data(item["t"],"5d","1d")
                 if not d.empty:
-                    pr=float(d["Close"].iloc[-1]); pv=float(d["Close"].iloc[-2]) if len(d)>1 else pr
-                    chg=(pr-pv)/pv*100; cost=item["c"] if item["c"]>0 else pr
-                    val=pr*item["q"]; pl=(pr-cost)*item["q"]; plp=(pr-cost)/cost*100 if cost>0 else 0
-                    tc+=cost*item["q"]; tv+=val
+                    pr=float(d["Close"].iloc[-1])
+                    pv=float(d["Close"].iloc[-2]) if len(d)>1 else pr
+                    chg=(pr-pv)/pv*100
+                    cost=item["c"] if item["c"]>0 else pr
+                    val=pr*item["q"]
+                    pl=(pr-cost)*item["q"]
+                    plp=(pr-cost)/cost*100 if cost>0 else 0
+                    tc+=cost*item["q"]
+                    tv+=val
                     rows.append({"t":item["t"],"q":item["q"],"c":cost,"p":pr,"chg":chg,"v":val,"pl":pl,"plp":plp})
-            except: pass
+            except:
+                pass
 
         if rows:
-            tpl=tv-tc; tplp=tpl/tc*100 if tc>0 else 0
+            tpl=tv-tc
+            tplp=tpl/tc*100 if tc>0 else 0
 
             # Günlük snapshot kaydet
             save_portfolio_snapshot(st.session_state.username, tv, tc)
@@ -1199,12 +1160,16 @@ with tab3:
                 cc="#22c55e" if row["chg"]>=0 else "#ef4444"
                 pc2="#22c55e" if row["pl"]>=0 else "#ef4444"
                 cols=st.columns([1.5,0.6,0.9,0.9,0.9,1.1,1.1,1.1,0.4])
-                vals=[f"<b style='color:var(--text)'>{row['t']}</b>",str(int(row['q'])),
-                      f"{row['c']:.2f}",f"{row['p']:.2f}",
-                      f"<span style='color:{cc}'>{row['chg']:+.2f}%</span>",
-                      f"{row['v']:,.2f}",
-                      f"<span style='color:{pc2}'>{row['pl']:+,.2f}</span>",
-                      f"<span style='color:{pc2}'>{row['plp']:+.2f}%</span>"]
+                vals=[
+                    f"<b style='color:var(--text)'>{row['t']}</b>",
+                    str(int(row['q'])),
+                    f"{row['c']:.2f}",
+                    f"{row['p']:.2f}",
+                    f"<span style='color:{cc}'>{row['chg']:+.2f}%</span>",
+                    f"{row['v']:,.2f}",
+                    f"<span style='color:{pc2}'>{row['pl']:+,.2f}</span>",
+                    f"<span style='color:{pc2}'>{row['plp']:+.2f}%</span>"
+                ]
                 for ci,v in enumerate(vals):
                     cols[ci].markdown(f"<div style='font-family:var(--mono);font-size:12px;padding:8px 0'>{v}</div>",unsafe_allow_html=True)
                 if cols[8].button("✕",key=f"pd{i}"):
@@ -1215,115 +1180,107 @@ with tab3:
 
             st.markdown("---")
 
-            # ── GÜNDELİK PERFORMANS GRAFİĞİ ──────────────────────────────────
-            # ── GÜNDELİK PERFORMANS GRAFİĞİ ──────────────────────────────────
-hist_df = load_portfolio_history(st.session_state.username)
+            # ── PERFORMANS GRAFİĞİ ────────────────────────────────────────────
+            hist_df = load_portfolio_history(st.session_state.username)
 
-# Bugünkü anlık değeri son nokta olarak ekle (geçmişte yoksa)
-today_str = pd.Timestamp(datetime.now().date())
-if hist_df.empty or hist_df["date"].max() < today_str:
-    today_row = pd.DataFrame([{
-        "date": today_str,
-        "total_value": round(tv, 2),
-        "total_cost": round(tc, 2),
-        "pl": round(tv - tc, 2),
-        "pl_pct": round((tv - tc) / tc * 100, 2) if tc > 0 else 0.0
-    }])
-    hist_df = pd.concat([hist_df, today_row], ignore_index=True).sort_values("date")
+            # Bugünkü anlık değeri son nokta olarak ekle (Sheets'e kaydetmeden, sadece görsel)
+            today_ts = pd.Timestamp(datetime.now().date())
+            if hist_df.empty or hist_df["date"].max() < today_ts:
+                today_row = pd.DataFrame([{
+                    "date": today_ts,
+                    "total_value": round(tv, 2),
+                    "total_cost": round(tc, 2),
+                    "pl": round(tv - tc, 2),
+                    "pl_pct": round((tv - tc) / tc * 100, 2) if tc > 0 else 0.0
+                }])
+                hist_df = pd.concat([hist_df, today_row], ignore_index=True).sort_values("date").reset_index(drop=True)
 
-if len(hist_df) >= 1:
-    st.markdown("### Portföy Performansı")
-    tab_g1, tab_g2 = st.tabs(["📈 Portföy Değeri", "💰 Kar / Zarar"])
+            st.markdown("### Portföy Performansı")
+            tab_g1, tab_g2 = st.tabs(["📈 Portföy Değeri", "💰 Kar / Zarar"])
 
-    with tab_g1:
-        fg = go.Figure()
-        fg.add_trace(go.Scatter(
-            x=hist_df["date"], y=hist_df["total_value"],
-            name="Portföy Değeri",
-            line=dict(color="#3b82f6", width=2),
-            fill="tozeroy", fillcolor="rgba(59,130,246,0.08)",
-            mode="lines+markers",
-            marker=dict(size=5, color="#3b82f6"),
-            hovertemplate="<b>%{x|%d %b %Y}</b><br>Değer: $%{y:,.2f}<extra></extra>"
-        ))
-        fg.add_trace(go.Scatter(
-            x=hist_df["date"], y=hist_df["total_cost"],
-            name="Maliyet",
-            line=dict(color="#4a5a78", width=1.5, dash="dot"),
-            mode="lines",
-            hovertemplate="<b>%{x|%d %b %Y}</b><br>Maliyet: $%{y:,.2f}<extra></extra>"
-        ))
-        fg.update_layout(
-            paper_bgcolor="#070b14", plot_bgcolor="#0d1420",
-            font=dict(color="#4a5a78", family="Sora"),
-            height=300, margin=dict(l=8,r=8,t=20,b=8),
-            hovermode="x unified",
-            hoverlabel=dict(bgcolor="#111c2e", bordercolor="#1a2840", font_color="#e8edf5"),
-            legend=dict(bgcolor="#0d1420", bordercolor="#1a2840", borderwidth=1,
-                        font=dict(size=11, color="#8899b0")),
-            xaxis=dict(gridcolor="#0f1926", zerolinecolor="#0f1926"),
-            yaxis=dict(gridcolor="#0f1926", zerolinecolor="#0f1926", tickprefix="$")
-        )
-        st.plotly_chart(fg, use_container_width=True)
+            with tab_g1:
+                fg = go.Figure()
+                fg.add_trace(go.Scatter(
+                    x=hist_df["date"], y=hist_df["total_value"],
+                    name="Portföy Değeri",
+                    line=dict(color="#3b82f6", width=2),
+                    fill="tozeroy", fillcolor="rgba(59,130,246,0.08)",
+                    mode="lines+markers",
+                    marker=dict(size=5, color="#3b82f6"),
+                    hovertemplate="<b>%{x|%d %b %Y}</b><br>Değer: $%{y:,.2f}<extra></extra>"
+                ))
+                fg.add_trace(go.Scatter(
+                    x=hist_df["date"], y=hist_df["total_cost"],
+                    name="Maliyet",
+                    line=dict(color="#4a5a78", width=1.5, dash="dot"),
+                    mode="lines",
+                    hovertemplate="<b>%{x|%d %b %Y}</b><br>Maliyet: $%{y:,.2f}<extra></extra>"
+                ))
+                fg.update_layout(
+                    paper_bgcolor="#070b14", plot_bgcolor="#0d1420",
+                    font=dict(color="#4a5a78", family="Sora"),
+                    height=300, margin=dict(l=8,r=8,t=20,b=8),
+                    hovermode="x unified",
+                    hoverlabel=dict(bgcolor="#111c2e", bordercolor="#1a2840", font_color="#e8edf5"),
+                    legend=dict(bgcolor="#0d1420", bordercolor="#1a2840", borderwidth=1,
+                                font=dict(size=11, color="#8899b0")),
+                    xaxis=dict(gridcolor="#0f1926", zerolinecolor="#0f1926"),
+                    yaxis=dict(gridcolor="#0f1926", zerolinecolor="#0f1926", tickprefix="$")
+                )
+                st.plotly_chart(fg, use_container_width=True)
 
-    with tab_g2:
-        colors = ["#22c55e" if v >= 0 else "#ef4444" for v in hist_df["pl"]]
-        fpl = go.Figure()
-        fpl.add_trace(go.Bar(
-            x=hist_df["date"], y=hist_df["pl"],
-            name="Kar/Zarar",
-            marker_color=colors,
-            hovertemplate="<b>%{x|%d %b %Y}</b><br>K/Z: $%{y:+,.2f}<extra></extra>"
-        ))
-        fpl.add_trace(go.Scatter(
-            x=hist_df["date"], y=hist_df["pl_pct"],
-            name="K/Z %",
-            line=dict(color="#f59e0b", width=2),
-            mode="lines+markers",
-            marker=dict(size=5),
-            yaxis="y2",
-            hovertemplate="<b>%{x|%d %b %Y}</b><br>K/Z: %{y:+.2f}%<extra></extra>"
-        ))
-        fpl.update_layout(
-            paper_bgcolor="#070b14", plot_bgcolor="#0d1420",
-            font=dict(color="#4a5a78", family="Sora"),
-            height=300, margin=dict(l=8,r=8,t=20,b=8),
-            hovermode="x unified",
-            hoverlabel=dict(bgcolor="#111c2e", bordercolor="#1a2840", font_color="#e8edf5"),
-            legend=dict(bgcolor="#0d1420", bordercolor="#1a2840", borderwidth=1,
-                        font=dict(size=11, color="#8899b0")),
-            xaxis=dict(gridcolor="#0f1926", zerolinecolor="#0f1926"),
-            yaxis=dict(gridcolor="#0f1926", zerolinecolor="#0f1926", tickprefix="$"),
-            yaxis2=dict(overlaying="y", side="right", ticksuffix="%",
-                        gridcolor="#0f1926", zerolinecolor="#1a2840")
-        )
-        st.plotly_chart(fpl, use_container_width=True)
+            with tab_g2:
+                bar_colors = ["#22c55e" if v >= 0 else "#ef4444" for v in hist_df["pl"]]
+                fpl = go.Figure()
+                fpl.add_trace(go.Bar(
+                    x=hist_df["date"], y=hist_df["pl"],
+                    name="Kar/Zarar",
+                    marker_color=bar_colors,
+                    hovertemplate="<b>%{x|%d %b %Y}</b><br>K/Z: $%{y:+,.2f}<extra></extra>"
+                ))
+                fpl.add_trace(go.Scatter(
+                    x=hist_df["date"], y=hist_df["pl_pct"],
+                    name="K/Z %",
+                    line=dict(color="#f59e0b", width=2),
+                    mode="lines+markers",
+                    marker=dict(size=5),
+                    yaxis="y2",
+                    hovertemplate="<b>%{x|%d %b %Y}</b><br>K/Z: %{y:+.2f}%<extra></extra>"
+                ))
+                fpl.update_layout(
+                    paper_bgcolor="#070b14", plot_bgcolor="#0d1420",
+                    font=dict(color="#4a5a78", family="Sora"),
+                    height=300, margin=dict(l=8,r=8,t=20,b=8),
+                    hovermode="x unified",
+                    hoverlabel=dict(bgcolor="#111c2e", bordercolor="#1a2840", font_color="#e8edf5"),
+                    legend=dict(bgcolor="#0d1420", bordercolor="#1a2840", borderwidth=1,
+                                font=dict(size=11, color="#8899b0")),
+                    xaxis=dict(gridcolor="#0f1926", zerolinecolor="#0f1926"),
+                    yaxis=dict(gridcolor="#0f1926", zerolinecolor="#0f1926", tickprefix="$"),
+                    yaxis2=dict(overlaying="y", side="right", ticksuffix="%",
+                                gridcolor="#0f1926", zerolinecolor="#1a2840")
+                )
+                st.plotly_chart(fpl, use_container_width=True)
 
             # Dağılım pasta
             if len(rows) > 1:
+                st.markdown("### Dağılım")
+                pal=["#e02020","#3b82f6","#22c55e","#f59e0b","#8b5cf6","#06b6d4","#f472b6","#a3e635"]
+                fp=go.Figure(go.Pie(
+                    labels=[r["t"] for r in rows],
+                    values=[r["v"] for r in rows],
+                    hole=0.68, textfont_size=12,
+                    marker=dict(colors=pal[:len(rows)], line=dict(color="#070b14",width=2))
+                ))
+                fp.add_annotation(text=f"<b>${tv:,.0f}</b>",font=dict(size=14,color="#e8edf5"),showarrow=False)
+                fp.update_layout(
+                    paper_bgcolor="#070b14", plot_bgcolor="#070b14",
+                    font=dict(color="#8899b0"), height=280,
+                    legend=dict(bgcolor="#0d1420", bordercolor="#1a2840"),
+                    margin=dict(l=0,r=0,t=20,b=0)
+                )
+                st.plotly_chart(fp, use_container_width=True)
 
-
-
-
-
-
-
-
-
-
-
-            
-                        st.markdown("### Dağılım")
-            pal=["#e02020","#3b82f6","#22c55e","#f59e0b","#8b5cf6","#06b6d4","#f472b6","#a3e635"]
-            fp=go.Figure(go.Pie(labels=[r["t"] for r in rows],values=[r["v"] for r in rows],
-                hole=0.68,textfont_size=12,
-                marker=dict(colors=pal[:len(rows)],line=dict(color="#070b14",width=2))))
-            fp.add_annotation(text=f"<b>${tv:,.0f}</b>",font=dict(size=14,color="#e8edf5"),showarrow=False)
-            fp.update_layout(paper_bgcolor="#070b14",plot_bgcolor="#070b14",
-                font=dict(color="#8899b0"),height=280,
-                legend=dict(bgcolor="#0d1420",bordercolor="#1a2840"),
-                margin=dict(l=0,r=0,t=20,b=0))
-            st.plotly_chart(fp,use_container_width=True)
 # ── TAB 4: ALARMLAR ────────────────────────────────────────────────────────────
 with tab4:
     st.markdown("### Fiyat Alarmları")
