@@ -821,18 +821,21 @@ def chart(df, ticker, inds):
         fig.add_hline(y=25,line_dash="dot",line_color="#1e293b",line_width=1,row=cr,col=1)
 
     fig.update_layout(
-        paper_bgcolor="#070b14",plot_bgcolor="#0d1420",
-        font=dict(color="#4a5a78",family="Sora"),
+        paper_bgcolor="#060a12", plot_bgcolor="#0b1220",
+        font=dict(color="#4a6080", family="Inter, sans-serif"),
         xaxis_rangeslider_visible=False,
-        legend=dict(bgcolor="#0d1420",bordercolor="#1a2840",borderwidth=1,
-                    font=dict(size=10,color="#8899b0"),orientation="h",y=1.02,x=0),
-        margin=dict(l=8,r=8,t=36,b=8),height=640,
+        legend=dict(bgcolor="#0f1929", bordercolor="#1c2d47", borderwidth=1,
+                    font=dict(size=10, color="#a8b8d0"), orientation="h", y=1.02, x=0),
+        margin=dict(l=8, r=8, t=36, b=8), height=660,
         hovermode="x unified",
-        hoverlabel=dict(bgcolor="#111c2e",bordercolor="#1a2840",font_color="#e8edf5")
+        hoverlabel=dict(bgcolor="#131f30", bordercolor="#1c2d47", font_color="#e2e8f4",
+                        font_family="JetBrains Mono, monospace")
     )
-    fig.update_xaxes(gridcolor="#0f1926",zerolinecolor="#0f1926",showspikes=True,spikecolor="#e02020",spikethickness=1)
-    fig.update_yaxes(gridcolor="#0f1926",zerolinecolor="#0f1926")
-    for a in fig.layout.annotations: a.font=dict(color="#4a5a78",size=11)
+    fig.update_xaxes(gridcolor="#0d1a28", zerolinecolor="#0d1a28",
+                     showspikes=True, spikecolor="#c0392b", spikethickness=1,
+                     spikedash="dot")
+    fig.update_yaxes(gridcolor="#0d1a28", zerolinecolor="#0d1a28")
+    for a in fig.layout.annotations: a.font = dict(color="#4a6080", size=11)
     return fig
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -996,29 +999,29 @@ with st.sidebar:
     st.markdown(f"""
     <div class="sb-logo">
       <div class="sb-logo-text">
-        <span style="color:#e02020">ARD</span>
-        <span style="color:#e8edf5"> FİNANS</span>
+        <span style="color:#c0392b">ARD</span>
+        <span style="color:#e2e8f4"> FİNANS</span>
       </div>
-      <div style="color:#2a3a52;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-top:2px">
+      <div style="color:#4a6080;font-size:9px;letter-spacing:2.5px;text-transform:uppercase;margin-top:4px;font-weight:500">
         AI Trading Platform
       </div>
     </div>
     <div class="sb-user">
       <div class="sb-avatar">{st.session_state.username[0].upper()}</div>
       <div>
-        <div style="font-size:13px;font-weight:600;color:#e8edf5">{st.session_state.username}</div>
-        <div style="font-size:10px;color:#2a3a52;display:flex;align-items:center;gap:4px">
-          <span style="width:5px;height:5px;border-radius:50%;background:#22c55e;display:inline-block"></span>
+        <div style="font-size:13px;font-weight:600;color:#e2e8f4">{st.session_state.username}</div>
+        <div style="font-size:10px;color:#4a6080;display:flex;align-items:center;gap:5px;margin-top:2px">
+          <span style="width:6px;height:6px;border-radius:50%;background:#10b981;display:inline-block;box-shadow:0 0 5px #10b981"></span>
           Aktif oturum
         </div>
       </div>
     </div>
     """, unsafe_allow_html=True)
 
-    if st.button("Çıkış Yap", use_container_width=True, type="secondary"):
+    if st.button("Oturumu Kapat", use_container_width=True, type="secondary"):
         st.session_state.logged_in=False; st.session_state.username=""; st.rerun()
 
-    st.markdown('<div class="sb-section-title">📈 Hisse Analizi</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sb-section-title">📈 HİSSE ANALİZİ</div>', unsafe_allow_html=True)
     raw = st.text_input("Sembol", value="AAPL", placeholder="AAPL · THYAO · BTC-USD", label_visibility="visible").upper().strip()
     ticker_input = resolve(raw)
     if ticker_input != raw and raw:
@@ -1173,9 +1176,13 @@ with tab1:
 
 # ── TAB 2: AI ANALİZ ───────────────────────────────────────────────────────────
 with tab2:
-    st.markdown('<div class="groq-badge"><span class="groq-dot"></span>Groq · Llama 3.3 70B</div>', unsafe_allow_html=True)
-    st.markdown("### Yapay Zeka Analizi")
-    st.markdown("<div style='color:var(--muted);font-size:13px;margin-bottom:16px'>25'den fazla teknik indikatör, sinyal skoru ve piyasa verileri birleştirilerek Türkçe analiz üretilir.</div>", unsafe_allow_html=True)
+    st.markdown('<div class="groq-badge"><span class="groq-dot"></span>Groq API · Çoklu Model</div>', unsafe_allow_html=True)
+    st.markdown("""
+    <div style='margin-bottom:20px'>
+      <div style='font-size:22px;font-weight:800;color:#e2e8f4;margin-bottom:6px'>🤖 Yapay Zeka Analizi</div>
+      <div style='color:#4a6080;font-size:13px;line-height:1.6'>25+ teknik indikatör ve piyasa verileri analiz edilerek kapsamlı Türkçe rapor oluşturulur.</div>
+    </div>
+    """, unsafe_allow_html=True)
 
     ai_raw=st.text_input("Analiz edilecek sembol",value=ticker_input,placeholder="AAPL · THYAO · BTC-USD").upper().strip()
     ai_t=resolve(ai_raw)
@@ -1217,29 +1224,23 @@ with tab2:
 # ── TAB 3: AI TAHMİN ──────────────────────────────────────────────────────────
 with tab3:
     st.markdown("""
+    <div style='margin-bottom:20px'>
+      <div style='font-size:22px;font-weight:800;color:#e2e8f4;margin-bottom:6px'>🔮 AI Fiyat Tahmini</div>
+      <div style='color:#4a6080;font-size:13px;line-height:1.6'>4 farklı yapay zeka modeli bağımsız tahmin üretir. Ort a tahminler konsensüs olarak gösterilir.</div>
+    </div>
     <style>
-    .pred-card {
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: 12px; padding: 18px 20px; margin-bottom: 8px;
-      transition: border-color 0.2s;
-    }
-    .pred-card:hover { border-color: #2d3f5e; }
-    .pred-model { font-size:13px; font-weight:700; margin-bottom:10px; }
-    .pred-price { font-family:var(--mono); font-size:18px; font-weight:700; }
-    .pred-label { font-size:9px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin-bottom:3px; }
-    .pred-signal-AL    { background:#052e16; color:#4ade80; border:1px solid #16a34a; border-radius:5px; padding:2px 10px; font-size:11px; font-weight:700; }
-    .pred-signal-SAT   { background:#2d0707; color:#f87171; border:1px solid #dc2626; border-radius:5px; padding:2px 10px; font-size:11px; font-weight:700; }
-    .pred-signal-NÖTR  { background:#1c1917; color:#a8a29e; border:1px solid #44403c; border-radius:5px; padding:2px 10px; font-size:11px; font-weight:700; }
-    .consensus-box {
-      background: linear-gradient(135deg, #0d1420 0%, #111c2e 100%);
-      border: 1px solid var(--border); border-radius: 14px;
-      padding: 22px 24px; margin-bottom: 20px;
-    }
+    .pred-card { background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 16px;transition:all 0.2s;height:100%; }
+    .pred-card:hover { border-color:var(--border2);background:var(--card2);transform:translateY(-2px);box-shadow:var(--shadow); }
+    .pred-model { font-size:12px;font-weight:700;margin-bottom:12px;color:var(--text); }
+    .pred-price { font-family:var(--mono);font-size:17px;font-weight:700; }
+    .pred-label { font-size:9px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);margin-bottom:3px;font-weight:600; }
+    .pred-signal-AL   { background:rgba(16,185,129,0.12);color:#34d399;border:1px solid rgba(16,185,129,0.3);border-radius:6px;padding:3px 12px;font-size:11px;font-weight:700;display:inline-block; }
+    .pred-signal-SAT  { background:rgba(239,68,68,0.12);color:#f87171;border:1px solid rgba(239,68,68,0.3);border-radius:6px;padding:3px 12px;font-size:11px;font-weight:700;display:inline-block; }
+    .pred-signal-NÖTR { background:rgba(100,116,139,0.12);color:#94a3b8;border:1px solid rgba(100,116,139,0.25);border-radius:6px;padding:3px 12px;font-size:11px;font-weight:700;display:inline-block; }
+    .consensus-box { background:linear-gradient(135deg,var(--card) 0%,#111e32 100%);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:24px 28px;margin-bottom:22px;box-shadow:var(--shadow-sm);position:relative;overflow:hidden; }
+    .consensus-box::before { content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--blue),var(--green)); }
     </style>
     """, unsafe_allow_html=True)
-
-    st.markdown("### 🔮 Çoklu Yapay Zeka Fiyat Tahmini")
-    st.markdown("<div style='color:var(--muted);font-size:13px;margin-bottom:18px'>4 farklı AI modeli bağımsız olarak fiyat tahmini yapar. Tahminler yatırım tavsiyesi değildir.</div>", unsafe_allow_html=True)
 
     fc1, fc2 = st.columns([3,1])
     with fc1:
@@ -1399,25 +1400,31 @@ with tab3:
     elif not st.session_state.ai_predictions:
         st.markdown("""
         <div class="onboard-card">
-          <h4>🔮 AI Tahmin Nasıl Çalışır?</h4>
+          <span class="icon">🔮</span>
+          <h4>AI Tahmin Nasıl Çalışır?</h4>
           <p>Yukarıya bir sembol girin ve <b>Tahmin Başlat</b> butonuna tıklayın.<br>
-          4 farklı yapay zeka modeli (Llama 3.3 70B, Llama 3 8B, Gemma 2, Mixtral) bağımsız olarak
-          1 günlük, 1 haftalık ve 1 aylık fiyat tahmini üretir.<br>
-          Sonuçlar grafik üzerinde görselleştirilir ve bir konsensüs tahmini hesaplanır.</p>
+          4 farklı yapay zeka modeli bağımsız olarak 1 günlük, 1 haftalık ve 1 aylık fiyat tahmini üretir.<br>
+          Sonuçlar grafik üzerinde görselleştirilir ve konsensüs hesaplanır.</p>
         </div>
         """, unsafe_allow_html=True)
 
 # ── TAB 4: PORTFÖY ─────────────────────────────────────────────────────────────
 with tab4:
-    st.markdown("### Portföy Takibi")
+    st.markdown("""
+    <div style='margin-bottom:20px'>
+      <div style='font-size:22px;font-weight:800;color:#e2e8f4;margin-bottom:6px'>💼 Portföy Takibi</div>
+      <div style='color:#4a6080;font-size:13px;line-height:1.6'>Hisse, kripto, ETF ve döviz varlıklarınızı gerçek zamanlı fiyatlarla takip edin.</div>
+    </div>
+    """, unsafe_allow_html=True)
     if not st.session_state.portfolio:
         st.markdown("""
         <div class="onboard-card">
-          <h4>Portföyünüz boş</h4>
-          <p>Sol menüden hisse sembolü, adet ve alış maliyetini girerek portföyünüze ekleyin.
+          <span class="icon">💼</span>
+          <h4>Portföyünüz Henüz Boş</h4>
+          <p>Sol menüden hisse sembolü, varlık türü, adet ve alış maliyetini girerek portföyünüze ekleyin.<br>
           Gerçek zamanlı fiyatlarla kar/zarar takibi yapılır. Portföyünüz kalıcı olarak saklanır.</p>
         </div>
-        """,unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
     else:
         rows=[]
         tc=0.0
@@ -1521,15 +1528,15 @@ with tab4:
                     hovertemplate="<b>%{x|%d %b %Y}</b><br>Maliyet: $%{y:,.2f}<extra></extra>"
                 ))
                 fg.update_layout(
-                    paper_bgcolor="#070b14", plot_bgcolor="#0d1420",
-                    font=dict(color="#4a5a78", family="Sora"),
+                    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                    font=dict(color="#8899b0", family="Sora"),
                     height=300, margin=dict(l=8,r=8,t=20,b=8),
                     hovermode="x unified",
-                    hoverlabel=dict(bgcolor="#111c2e", bordercolor="#1a2840", font_color="#e8edf5"),
-                    legend=dict(bgcolor="#0d1420", bordercolor="#1a2840", borderwidth=1,
+                    hoverlabel=dict(bgcolor="#0d1420", bordercolor="#1a2840", font_color="#e8edf5"),
+                    legend=dict(bgcolor="rgba(0,0,0,0)", bordercolor="rgba(0,0,0,0)",
                                 font=dict(size=11, color="#8899b0")),
-                    xaxis=dict(gridcolor="#0f1926", zerolinecolor="#0f1926"),
-                    yaxis=dict(gridcolor="#0f1926", zerolinecolor="#0f1926", tickprefix="$")
+                    xaxis=dict(gridcolor="#1a2840", zerolinecolor="#1a2840"),
+                    yaxis=dict(gridcolor="#1a2840", zerolinecolor="#1a2840", tickprefix="$")
                 )
                 st.plotly_chart(fg, use_container_width=True)
 
@@ -1552,17 +1559,17 @@ with tab4:
                     hovertemplate="<b>%{x|%d %b %Y}</b><br>K/Z: %{y:+.2f}%<extra></extra>"
                 ))
                 fpl.update_layout(
-                    paper_bgcolor="#070b14", plot_bgcolor="#0d1420",
-                    font=dict(color="#4a5a78", family="Sora"),
+                    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                    font=dict(color="#8899b0", family="Sora"),
                     height=300, margin=dict(l=8,r=8,t=20,b=8),
                     hovermode="x unified",
-                    hoverlabel=dict(bgcolor="#111c2e", bordercolor="#1a2840", font_color="#e8edf5"),
-                    legend=dict(bgcolor="#0d1420", bordercolor="#1a2840", borderwidth=1,
+                    hoverlabel=dict(bgcolor="#0d1420", bordercolor="#1a2840", font_color="#e8edf5"),
+                    legend=dict(bgcolor="rgba(0,0,0,0)", bordercolor="rgba(0,0,0,0)",
                                 font=dict(size=11, color="#8899b0")),
-                    xaxis=dict(gridcolor="#0f1926", zerolinecolor="#0f1926"),
-                    yaxis=dict(gridcolor="#0f1926", zerolinecolor="#0f1926", tickprefix="$"),
+                    xaxis=dict(gridcolor="#1a2840", zerolinecolor="#1a2840"),
+                    yaxis=dict(gridcolor="#1a2840", zerolinecolor="#1a2840", tickprefix="$"),
                     yaxis2=dict(overlaying="y", side="right", ticksuffix="%",
-                                gridcolor="#0f1926", zerolinecolor="#1a2840")
+                                gridcolor="#1a2840", zerolinecolor="#1a2840")
                 )
                 st.plotly_chart(fpl, use_container_width=True)
 
@@ -1578,26 +1585,31 @@ with tab4:
                 ))
                 fp.add_annotation(text=f"<b>${tv:,.0f}</b>",font=dict(size=14,color="#e8edf5"),showarrow=False)
                 fp.update_layout(
-                    paper_bgcolor="#070b14", plot_bgcolor="#070b14",
+                    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
                     font=dict(color="#8899b0"), height=280,
-                    legend=dict(bgcolor="#0d1420", bordercolor="#1a2840"),
+                    legend=dict(bgcolor="rgba(0,0,0,0)", bordercolor="rgba(0,0,0,0)"),
                     margin=dict(l=0,r=0,t=20,b=0)
                 )
                 st.plotly_chart(fp, use_container_width=True)
 
 # ── TAB 5: ALARMLAR ────────────────────────────────────────────────────────────
 with tab5:
-    st.markdown("### Fiyat Alarmları")
-    st.markdown("<div style='color:var(--muted);font-size:12px;margin-bottom:14px'>Fiyat hedefine ulaştığında e-posta bildirimi gönderilir.</div>",unsafe_allow_html=True)
+    st.markdown("""
+    <div style='margin-bottom:20px'>
+      <div style='font-size:22px;font-weight:800;color:#e2e8f4;margin-bottom:6px'>🔔 Fiyat Alarmları</div>
+      <div style='color:#4a6080;font-size:13px;line-height:1.6'>Belirlediğiniz fiyat hedefine ulaşıldığında e-posta bildirimi alın.</div>
+    </div>
+    """, unsafe_allow_html=True)
 
     if not st.session_state.alerts:
         st.markdown("""
         <div class="onboard-card">
-          <h4>Alarm kurulmamış</h4>
-          <p>Sol menüden sembol, hedef fiyat ve e-posta adresinizi girerek alarm kurabilirsiniz.
-          Hedef gerçekleştiğinde anında bildirim alırsınız.</p>
+          <span class="icon">🔔</span>
+          <h4>Alarm Kurulmamış</h4>
+          <p>Sol menüden sembol, hedef fiyat ve e-posta adresinizi girerek alarm kurabilirsiniz.<br>
+          Fiyat hedefine ulaşıldığında anlık e-posta bildirimi gönderilir.</p>
         </div>
-        """,unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
     else:
         fired=[]
         hcols=st.columns([1.2,0.9,0.9,1,1.6,1.8,0.4])
