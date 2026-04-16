@@ -26,203 +26,260 @@ st.set_page_config(
 # ══════════════════════════════════════════════════════════════════════════════
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
-  --bg:      #070b14;
-  --surface: #0d1420;
-  --card:    #111c2e;
-  --border:  #1a2840;
-  --accent:  #e02020;
-  --accent2: #ff4444;
-  --text:    #e8edf5;
-  --muted:   #4a5a78;
-  --green:   #22c55e;
-  --red:     #ef4444;
-  --yellow:  #f59e0b;
-  --mono:    'JetBrains Mono', monospace;
-  --sans:    'Sora', sans-serif;
+  --bg:        #060a12;
+  --surface:   #0b1220;
+  --card:      #0f1929;
+  --card2:     #131f30;
+  --border:    #1c2d47;
+  --border2:   #243552;
+  --accent:    #c0392b;
+  --accent2:   #e74c3c;
+  --accentg:   rgba(192,57,43,0.12);
+  --text:      #e2e8f4;
+  --text2:     #a8b8d0;
+  --muted:     #4a6080;
+  --green:     #10b981;
+  --red:       #ef4444;
+  --yellow:    #f59e0b;
+  --blue:      #3b82f6;
+  --mono:      'JetBrains Mono', monospace;
+  --sans:      'Inter', sans-serif;
+  --radius:    10px;
+  --radius-lg: 14px;
+  --shadow:    0 4px 24px rgba(0,0,0,0.45);
+  --shadow-sm: 0 2px 10px rgba(0,0,0,0.3);
 }
 
+*, *::before, *::after { box-sizing: border-box; }
 html, body, [class*="css"] {
-  font-family: var(--sans);
-  background: var(--bg);
-  color: var(--text);
+  font-family: var(--sans); background: var(--bg);
+  color: var(--text); -webkit-font-smoothing: antialiased;
 }
 .stApp { background: var(--bg); }
+.block-container { padding-top: 1.5rem !important; }
 
-::-webkit-scrollbar { width:4px; height:4px; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius:2px; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
 
+/* ─── SIDEBAR ─── */
 section[data-testid="stSidebar"] {
   background: var(--surface) !important;
   border-right: 1px solid var(--border) !important;
 }
 section[data-testid="stSidebar"] > div { padding-top: 0 !important; }
 
+/* ─── METRICS ─── */
 [data-testid="stMetric"] {
   background: var(--card); border: 1px solid var(--border);
-  border-radius: 10px; padding: 14px 16px;
+  border-radius: var(--radius-lg); padding: 18px 20px;
+  transition: border-color 0.2s, transform 0.15s;
+  position: relative; overflow: hidden;
 }
-[data-testid="stMetricLabel"] { color: var(--muted) !important; font-size:10px !important; text-transform:uppercase; letter-spacing:1px; }
-[data-testid="stMetricValue"] { color: var(--text) !important; font-family: var(--mono) !important; font-size:18px !important; }
-[data-testid="stMetricDelta"] { font-family: var(--mono) !important; font-size:11px !important; }
+[data-testid="stMetric"]:hover { border-color: var(--border2); transform: translateY(-1px); }
+[data-testid="stMetric"]::after {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background: linear-gradient(90deg,var(--accent),transparent); opacity:0.6;
+}
+[data-testid="stMetricLabel"] {
+  color: var(--muted) !important; font-size: 10px !important;
+  text-transform: uppercase; letter-spacing: 1.3px; font-weight: 600 !important;
+}
+[data-testid="stMetricValue"] {
+  color: var(--text) !important; font-family: var(--mono) !important;
+  font-size: 20px !important; font-weight: 600 !important;
+}
+[data-testid="stMetricDelta"] { font-family: var(--mono) !important; font-size: 11px !important; }
 
+/* ─── TABS ─── */
 .stTabs [data-baseweb="tab-list"] {
-  background: var(--surface); border-radius:8px; padding:3px; gap:2px;
-  border: 1px solid var(--border);
+  background: var(--surface); border-radius: var(--radius);
+  padding: 4px; gap: 2px; border: 1px solid var(--border); margin-bottom: 6px;
 }
 .stTabs [data-baseweb="tab"] {
   background: transparent; color: var(--muted);
-  border-radius:6px; font-size:13px; font-weight:500; padding:7px 16px;
+  border-radius: 8px; font-size: 13px; font-weight: 500; padding: 8px 18px;
+  transition: color 0.2s;
 }
+.stTabs [data-baseweb="tab"]:hover { color: var(--text2); }
 .stTabs [aria-selected="true"] {
   background: var(--card) !important; color: var(--text) !important;
-  border: 1px solid var(--border) !important;
+  border: 1px solid var(--border2) !important; font-weight: 600 !important;
+  box-shadow: var(--shadow-sm) !important;
 }
 
+/* ─── BUTTONS ─── */
 .stButton > button {
-  background: var(--accent); color: #fff; border: none;
-  border-radius: 8px; font-family: var(--sans); font-weight: 600;
-  font-size: 13px; padding: 9px 20px; transition: all 0.2s;
-  letter-spacing: 0.3px;
+  background: linear-gradient(135deg,var(--accent),#a93226);
+  color:#fff; border:none; border-radius:var(--radius);
+  font-family:var(--sans); font-weight:600; font-size:13px;
+  padding:10px 22px; transition:all 0.2s; letter-spacing:0.2px;
+  box-shadow: 0 2px 12px rgba(192,57,43,0.25);
 }
 .stButton > button:hover {
-  background: var(--accent2); transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(224,32,32,0.35);
+  background: linear-gradient(135deg,var(--accent2),var(--accent));
+  transform:translateY(-1px); box-shadow:0 6px 20px rgba(192,57,43,0.4);
 }
+.stButton > button:active { transform:translateY(0); }
 .stButton > button[kind="secondary"] {
-  background: var(--card); color: var(--muted);
-  border: 1px solid var(--border);
+  background:var(--card); color:var(--text2);
+  border:1px solid var(--border); box-shadow:none;
 }
 .stButton > button[kind="secondary"]:hover {
-  background: var(--border); color: var(--text);
-  box-shadow: none; transform: none;
+  background:var(--card2); color:var(--text);
+  border-color:var(--border2); transform:none; box-shadow:none;
 }
 
+/* ─── INPUTS ─── */
 .stTextInput > div > div > input,
-.stNumberInput > div > div > input {
-  background: var(--surface) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: 8px !important; color: var(--text) !important;
-  font-family: var(--sans) !important; font-size: 13px !important;
+.stNumberInput > div > div > input,
+.stTextArea > div > div > textarea {
+  background:var(--surface) !important; border:1px solid var(--border) !important;
+  border-radius:var(--radius) !important; color:var(--text) !important;
+  font-family:var(--sans) !important; font-size:13px !important;
+  padding:9px 12px !important; transition:border-color 0.2s,box-shadow 0.2s !important;
 }
 .stTextInput > div > div > input:focus,
-.stNumberInput > div > div > input:focus {
-  border-color: var(--accent) !important;
-  box-shadow: 0 0 0 2px rgba(224,32,32,0.15) !important;
+.stNumberInput > div > div > input:focus,
+.stTextArea > div > div > textarea:focus {
+  border-color:var(--accent) !important;
+  box-shadow:0 0 0 3px rgba(192,57,43,0.12) !important; outline:none !important;
 }
-.stTextInput label, .stNumberInput label, .stSelectbox label, .stMultiSelect label {
-  color: var(--muted) !important; font-size: 11px !important;
-  text-transform: uppercase; letter-spacing: 1px;
+.stTextInput label,.stNumberInput label,.stSelectbox label,
+.stMultiSelect label,.stTextArea label {
+  color:var(--muted) !important; font-size:10px !important;
+  text-transform:uppercase; letter-spacing:1.2px; font-weight:600 !important;
+}
+.stSelectbox > div > div,.stMultiSelect > div > div {
+  background:var(--surface) !important; border:1px solid var(--border) !important;
+  border-radius:var(--radius) !important; color:var(--text) !important;
+}
+.stSelectbox > div > div:focus-within,.stMultiSelect > div > div:focus-within {
+  border-color:var(--accent) !important;
 }
 
-.stSelectbox > div > div,
-.stMultiSelect > div > div {
-  background: var(--surface) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: 8px !important; color: var(--text) !important;
-}
-
-hr { border-color: var(--border); margin: 12px 0; }
-.stAlert { background: var(--card) !important; border: 1px solid var(--border) !important; border-radius: 8px; }
-
+/* ─── MISC ─── */
+hr { border:none; border-top:1px solid var(--border); margin:14px 0; }
+.stAlert { background:var(--card) !important; border:1px solid var(--border) !important; border-radius:var(--radius) !important; }
 .streamlit-expanderHeader {
-  background: var(--card) !important; border: 1px solid var(--border) !important;
-  border-radius: 8px !important; color: var(--text) !important;
-  font-size: 13px !important;
+  background:var(--card) !important; border:1px solid var(--border) !important;
+  border-radius:var(--radius) !important; color:var(--text2) !important;
+  font-size:13px !important; font-weight:500 !important;
 }
+.streamlit-expanderHeader:hover { border-color:var(--border2) !important; }
+.stDataFrame { border:1px solid var(--border) !important; border-radius:var(--radius); overflow:hidden; }
+[data-testid="stToast"] { background:var(--card2) !important; border:1px solid var(--border2) !important; border-radius:var(--radius) !important; }
 
-.stDataFrame { border: 1px solid var(--border) !important; border-radius: 8px; overflow: hidden; }
-[data-testid="stToast"] { background: var(--card) !important; border: 1px solid var(--border) !important; }
+/* ─── BADGES ─── */
+.badge-buy    { background:rgba(16,185,129,0.12); color:#34d399; border:1px solid rgba(16,185,129,0.3); border-radius:6px; padding:2px 10px; font-size:11px; font-family:var(--mono); font-weight:700; white-space:nowrap; }
+.badge-sell   { background:rgba(239,68,68,0.12); color:#f87171; border:1px solid rgba(239,68,68,0.3); border-radius:6px; padding:2px 10px; font-size:11px; font-family:var(--mono); font-weight:700; white-space:nowrap; }
+.badge-neutral{ background:rgba(100,116,139,0.12); color:#94a3b8; border:1px solid rgba(100,116,139,0.25); border-radius:6px; padding:2px 10px; font-size:11px; font-family:var(--mono); font-weight:700; white-space:nowrap; }
 
-.badge-buy    { background:#052e16; color:#4ade80; border:1px solid #16a34a; border-radius:5px; padding:1px 8px; font-size:11px; font-family:var(--mono); font-weight:600; white-space:nowrap; }
-.badge-sell   { background:#2d0707; color:#f87171; border:1px solid #dc2626; border-radius:5px; padding:1px 8px; font-size:11px; font-family:var(--mono); font-weight:600; white-space:nowrap; }
-.badge-neutral{ background:#1c1917; color:#78716c; border:1px solid #44403c; border-radius:5px; padding:1px 8px; font-size:11px; font-family:var(--mono); font-weight:600; white-space:nowrap; }
-
+/* ─── SIGNAL CARDS ─── */
 .sig-card {
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 10px; padding: 12px 10px; text-align: center;
-  transition: border-color 0.2s;
+  background:var(--card); border:1px solid var(--border);
+  border-radius:var(--radius); padding:14px 10px; text-align:center;
+  transition:all 0.2s; height:100%;
 }
-.sig-card:hover { border-color: #2d3f5e; }
-.sig-label { color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
-.sig-desc  { color: var(--muted); font-size: 9px; margin-top: 5px; line-height: 1.3; }
+.sig-card:hover { border-color:var(--border2); background:var(--card2); transform:translateY(-1px); }
+.sig-label { color:var(--muted); font-size:9px; text-transform:uppercase; letter-spacing:1.2px; margin-bottom:6px; font-weight:600; }
+.sig-desc  { color:var(--muted); font-size:9px; margin-top:6px; line-height:1.4; }
 
+/* ─── AI BOX ─── */
 .ai-box {
-  background: var(--card); border: 1px solid var(--border);
-  border-left: 3px solid var(--accent); border-radius: 10px;
-  padding: 20px 24px; font-size: 13px; line-height: 1.9;
-  color: #c5cfe0; margin-top: 12px; white-space: pre-wrap;
+  background:var(--card); border:1px solid var(--border);
+  border-left:3px solid var(--accent); border-radius:var(--radius-lg);
+  padding:22px 26px; font-size:13.5px; line-height:2;
+  color:var(--text2); margin-top:14px; white-space:pre-wrap;
+  box-shadow:var(--shadow-sm);
 }
 
-.pf-row {
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 8px; padding: 12px 16px; margin-bottom: 6px;
-  transition: border-color 0.2s;
-}
-.pf-row:hover { border-color: #2d3f5e; }
-
+/* ─── ONBOARD / EMPTY STATE ─── */
 .onboard-card {
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 12px; padding: 20px 24px; margin-bottom: 12px;
+  background:var(--card); border:1px solid var(--border);
+  border-radius:var(--radius-lg); padding:32px 36px; margin-bottom:14px;
+  text-align:center;
 }
-.onboard-card h4 { margin: 0 0 8px; color: var(--text); font-size: 14px; font-weight: 600; }
-.onboard-card p  { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
-.onboard-step {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 24px; height: 24px; border-radius: 50%; background: var(--accent);
-  color: #fff; font-size: 11px; font-weight: 700; margin-right: 8px; flex-shrink: 0;
-}
+.onboard-card h4 { margin:0 0 10px; color:var(--text); font-size:16px; font-weight:700; }
+.onboard-card p  { margin:0; color:var(--text2); font-size:13px; line-height:1.8; }
+.onboard-card .icon { font-size:40px; margin-bottom:16px; display:block; }
 
+/* ─── PRICE HEADER ─── */
 .price-header {
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 12px; padding: 16px 20px; margin-bottom: 16px;
-  display: flex; flex-wrap: wrap; align-items: center; gap: 16px;
+  background:linear-gradient(135deg,var(--card) 0%,var(--card2) 100%);
+  border:1px solid var(--border); border-radius:var(--radius-lg);
+  padding:20px 24px; margin-bottom:18px;
+  display:flex; flex-wrap:wrap; align-items:center; gap:20px;
+  box-shadow:var(--shadow-sm);
 }
 
+/* ─── STATUS BADGES ─── */
 .groq-badge {
-  display: inline-flex; align-items: center; gap: 6px;
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 20px; padding: 3px 12px;
-  font-size: 11px; color: var(--muted); font-weight: 500;
-  margin-bottom: 14px;
+  display:inline-flex; align-items:center; gap:7px;
+  background:var(--card); border:1px solid var(--border);
+  border-radius:20px; padding:4px 14px;
+  font-size:11px; color:var(--text2); font-weight:500; margin-bottom:16px;
 }
-.groq-dot { width:6px; height:6px; border-radius:50%; background:var(--green); }
+.groq-dot {
+  width:7px; height:7px; border-radius:50%; background:var(--green);
+  box-shadow:0 0 6px var(--green); animation:pulse-dot 2s infinite;
+}
+@keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.45} }
 
+/* ─── FOOTER ─── */
 .footer-bar {
-  margin-top: 40px; padding: 16px 20px;
-  background: var(--surface); border-top: 1px solid var(--border);
-  border-radius: 10px; text-align: center;
-  color: var(--muted); font-size: 11px; line-height: 1.7;
+  margin-top:48px; padding:18px 24px;
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius-lg); text-align:center;
+  color:var(--muted); font-size:11px; line-height:1.8;
 }
 
-.sb-logo {
-  padding: 20px 16px 14px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 4px;
-}
-.sb-logo-text {
-  font-size: 22px; font-weight: 800; letter-spacing: -0.5px;
-  line-height: 1;
-}
+/* ─── SIDEBAR COMPONENTS ─── */
+.sb-logo { padding:22px 18px 16px; border-bottom:1px solid var(--border); margin-bottom:2px; }
+.sb-logo-text { font-size:20px; font-weight:800; letter-spacing:-0.8px; line-height:1; }
 .sb-user {
-  padding: 10px 16px;
-  display: flex; align-items: center; gap: 10px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 8px;
+  padding:12px 18px; display:flex; align-items:center; gap:11px;
+  border-bottom:1px solid var(--border); margin-bottom:6px;
 }
 .sb-avatar {
-  width: 30px; height: 30px; border-radius: 50%;
-  background: var(--accent); color: #fff;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 13px; font-weight: 700; flex-shrink: 0;
+  width:34px; height:34px; border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),#922b21);
+  color:#fff; display:flex; align-items:center; justify-content:center;
+  font-size:14px; font-weight:700; flex-shrink:0;
+  box-shadow:0 2px 8px rgba(192,57,43,0.35);
 }
-.sb-section { padding: 0 4px; margin-top: 4px; }
 .sb-section-title {
-  color: var(--muted); font-size: 9px; text-transform: uppercase;
-  letter-spacing: 1.5px; padding: 8px 12px 4px; font-weight: 600;
+  color:var(--muted); font-size:9px; text-transform:uppercase;
+  letter-spacing:2px; padding:10px 18px 5px; font-weight:700;
+}
+
+/* ─── PREDICTION CARDS ─── */
+.pred-card {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:var(--radius-lg); padding:18px 16px;
+  transition:all 0.2s; height:100%;
+}
+.pred-card:hover { border-color:var(--border2); background:var(--card2); transform:translateY(-2px); box-shadow:var(--shadow); }
+.pred-model { font-size:12px; font-weight:700; margin-bottom:12px; color:var(--text); }
+.pred-price { font-family:var(--mono); font-size:17px; font-weight:700; }
+.pred-label { font-size:9px; text-transform:uppercase; letter-spacing:1.2px; color:var(--muted); margin-bottom:3px; font-weight:600; }
+.pred-signal-AL   { background:rgba(16,185,129,0.12); color:#34d399; border:1px solid rgba(16,185,129,0.3); border-radius:6px; padding:3px 12px; font-size:11px; font-weight:700; display:inline-block; }
+.pred-signal-SAT  { background:rgba(239,68,68,0.12); color:#f87171; border:1px solid rgba(239,68,68,0.3); border-radius:6px; padding:3px 12px; font-size:11px; font-weight:700; display:inline-block; }
+.pred-signal-NÖTR { background:rgba(100,116,139,0.12); color:#94a3b8; border:1px solid rgba(100,116,139,0.25); border-radius:6px; padding:3px 12px; font-size:11px; font-weight:700; display:inline-block; }
+
+/* ─── CONSENSUS BOX ─── */
+.consensus-box {
+  background:linear-gradient(135deg,var(--card) 0%,#111e32 100%);
+  border:1px solid var(--border2); border-radius:var(--radius-lg);
+  padding:24px 28px; margin-bottom:22px; box-shadow:var(--shadow-sm);
+  position:relative; overflow:hidden;
+}
+.consensus-box::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:3px;
+  background:linear-gradient(90deg,var(--accent),var(--blue),var(--green));
 }
 </style>
 """, unsafe_allow_html=True)
@@ -300,7 +357,7 @@ def _get_portfolio_sheet():
             sheet = wb.worksheet("portfolios")
         except:
             sheet = wb.add_worksheet("portfolios", rows=1000, cols=6)
-            sheet.append_row(["username","ticker","qty","cost","added"])
+            sheet.append_row(["username","ticker","qty","cost","added","asset_type"])
         return sheet
     except Exception as e:
         return None
@@ -328,22 +385,25 @@ def _get_history_sheet():
     except:
         return None
 
+ASSET_TYPES = ["📈 Hisse", "🪙 Kripto", "📊 ETF/Fon", "💱 Döviz"]
+
 def load_portfolio(username):
     sheet = _get_portfolio_sheet()
     if not sheet: return []
     try:
         records = sheet.get_all_records()
         return [{"t": r["ticker"], "q": float(r["qty"]),
-                 "c": float(r["cost"])} for r in records
+                 "c": float(r["cost"]),
+                 "type": r.get("asset_type", "📈 Hisse")} for r in records
                 if r.get("username") == username and r.get("ticker")]
     except: return []
 
-def save_portfolio_item(username, ticker, qty, cost):
+def save_portfolio_item(username, ticker, qty, cost, asset_type="📈 Hisse"):
     sheet = _get_portfolio_sheet()
     if not sheet: return False
     try:
         sheet.append_row([username, ticker, qty, cost,
-                          datetime.now().strftime("%Y-%m-%d %H:%M")])
+                          datetime.now().strftime("%Y-%m-%d %H:%M"), asset_type])
         return True
     except: return False
 
@@ -391,7 +451,7 @@ def load_portfolio_history(username):
 # ══════════════════════════════════════════════════════════════════════════════
 DEFAULTS = dict(portfolio=[], alerts=[], groq_key="", logged_in=False,
                 username="", auth_page="login", auth_msg="", auth_ok=False,
-                splash_done=False, pf_loaded=False)
+                splash_done=False, pf_loaded=False, ai_predictions={})
 for k, v in DEFAULTS.items():
     if k not in st.session_state: st.session_state[k] = v
 
@@ -843,6 +903,54 @@ Risk faktörleri ve izlenecek seviyeler.
             raise e
     raise Exception("Groq modelleri şu an kullanılamıyor.")
 
+
+AI_MODELS = [
+    {"id": "llama-3.3-70b-versatile",  "name": "Llama 3.3 70B",   "icon": "🦙", "color": "#f59e0b"},
+    {"id": "llama3-8b-8192",            "name": "Llama 3 8B",      "icon": "⚡", "color": "#3b82f6"},
+    {"id": "gemma2-9b-it",              "name": "Gemma 2 9B",      "icon": "💎", "color": "#22c55e"},
+    {"id": "mixtral-8x7b-32768",        "name": "Mixtral 8x7B",    "icon": "🔀", "color": "#a855f7"},
+]
+
+def ai_price_forecast(ticker, df, info, key, model_id):
+    """Belirli bir model ile fiyat tahmini üretir."""
+    client = Groq(api_key=key)
+    lc = float(df["Close"].iloc[-1])
+    rsi = float(df["RSI"].iloc[-1]) if "RSI" in df.columns else 50
+    macd = float(df["MACD"].iloc[-1]) if "MACD" in df.columns else 0
+    adx = float(df["ADX"].iloc[-1]) if "ADX" in df.columns else 0
+    ema20 = float(df["EMA20"].iloc[-1]) if "EMA20" in df.columns else lc
+    ema50 = float(df["EMA50"].iloc[-1]) if "EMA50" in df.columns else lc
+    atr_pct = float(df["ATR%"].iloc[-1]) if "ATR%" in df.columns else 1.0
+
+    prompt = f"""Hisse: {ticker} | Son fiyat: {lc:.4f} {info.get('currency','USD')}
+RSI: {rsi:.1f} | MACD: {macd:.4f} | ADX: {adx:.1f}
+EMA20: {ema20:.4f} | EMA50: {ema50:.4f} | ATR%: {atr_pct:.2f}%
+52H: {info.get('fiftyTwoWeekLow','?')} — {info.get('fiftyTwoWeekHigh','?')}
+Sektör: {info.get('sector','?')} | Beta: {info.get('beta','?')}
+
+Sadece aşağıdaki JSON formatını döndür, başka hiçbir şey yazma:
+{{"1gun": <sayı>, "1hafta": <sayı>, "1ay": <sayı>, "yorum": "<max 1 cümle türkçe>", "sinyal": "AL|NÖTR|SAT"}}"""
+
+    try:
+        r = client.chat.completions.create(
+            model=model_id,
+            messages=[
+                {"role": "system", "content": "Sen bir fiyat tahmin modelisin. Sadece istenen JSON formatında yanıt ver, markdown veya extra metin kullanma."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.3, max_tokens=200
+        )
+        import json as _json
+        raw = r.choices[0].message.content.strip()
+        # JSON bloğunu bul
+        import re as _re
+        m = _re.search(r'\{.*\}', raw, _re.DOTALL)
+        if m:
+            return _json.loads(m.group())
+    except:
+        pass
+    return None
+
 # ══════════════════════════════════════════════════════════════════════════════
 # E-POSTA
 # ══════════════════════════════════════════════════════════════════════════════
@@ -928,17 +1036,18 @@ with st.sidebar:
     selected=overlay+panels
 
     st.markdown('<div class="sb-section-title">💼 Portföy</div>', unsafe_allow_html=True)
-    pf_raw=st.text_input("Sembol",key="pf",placeholder="AAPL · GARAN").upper().strip()
+    pf_raw=st.text_input("Sembol",key="pf",placeholder="AAPL · GARAN · BTC-USD").upper().strip()
     pf_t=resolve(pf_raw)
     if pf_t!=pf_raw and pf_raw: st.caption(f"🇹🇷 → {pf_t}")
+    pf_asset_type = st.selectbox("Varlık Türü", ASSET_TYPES, key="pf_type")
     pc1,pc2=st.columns(2)
-    with pc1: pf_qty=st.number_input("Adet",min_value=1,value=1,step=1)
-    with pc2: pf_cost=st.number_input("Maliyet",min_value=0.0,value=0.0,step=0.1,format="%.2f")
+    with pc1: pf_qty=st.number_input("Adet",min_value=0.0001,value=1.0,step=1.0,format="%.4f")
+    with pc2: pf_cost=st.number_input("Maliyet",min_value=0.0,value=0.0,step=0.1,format="%.4f")
     if st.button("Portföye Ekle",use_container_width=True):
         if pf_t and not any(p["t"]==pf_t for p in st.session_state.portfolio):
-            ok = save_portfolio_item(st.session_state.username, pf_t, pf_qty, pf_cost)
+            ok = save_portfolio_item(st.session_state.username, pf_t, pf_qty, pf_cost, pf_asset_type)
             if ok:
-                st.session_state.portfolio.append({"t":pf_t,"q":pf_qty,"c":pf_cost})
+                st.session_state.portfolio.append({"t":pf_t,"q":pf_qty,"c":pf_cost,"type":pf_asset_type})
                 st.success(f"✓ {pf_t} eklendi")
             else:
                 st.error("Kaydedilemedi, tekrar deneyin.")
@@ -959,7 +1068,7 @@ with st.sidebar:
 # ══════════════════════════════════════════════════════════════════════════════
 # ANA İÇERİK
 # ══════════════════════════════════════════════════════════════════════════════
-tab1,tab2,tab3,tab4 = st.tabs(["📈 Grafik & Sinyaller","🤖 AI Analiz","💼 Portföy","🔔 Alarmlar"])
+tab1,tab2,tab3,tab4,tab5 = st.tabs(["📈 Grafik & Sinyaller","🤖 AI Analiz","🔮 AI Tahmin","💼 Portföy","🔔 Alarmlar"])
 
 # ── TAB 1: GRAFİK ──────────────────────────────────────────────────────────────
 with tab1:
@@ -1105,8 +1214,201 @@ with tab2:
                 st.markdown(f'<div class="ai-box">{r.choices[0].message.content}</div>',unsafe_allow_html=True)
             except Exception as e: st.error(f"Hata: {e}")
 
-# ── TAB 3: PORTFÖY ─────────────────────────────────────────────────────────────
+# ── TAB 3: AI TAHMİN ──────────────────────────────────────────────────────────
 with tab3:
+    st.markdown("""
+    <style>
+    .pred-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 18px 20px; margin-bottom: 8px;
+      transition: border-color 0.2s;
+    }
+    .pred-card:hover { border-color: #2d3f5e; }
+    .pred-model { font-size:13px; font-weight:700; margin-bottom:10px; }
+    .pred-price { font-family:var(--mono); font-size:18px; font-weight:700; }
+    .pred-label { font-size:9px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin-bottom:3px; }
+    .pred-signal-AL    { background:#052e16; color:#4ade80; border:1px solid #16a34a; border-radius:5px; padding:2px 10px; font-size:11px; font-weight:700; }
+    .pred-signal-SAT   { background:#2d0707; color:#f87171; border:1px solid #dc2626; border-radius:5px; padding:2px 10px; font-size:11px; font-weight:700; }
+    .pred-signal-NÖTR  { background:#1c1917; color:#a8a29e; border:1px solid #44403c; border-radius:5px; padding:2px 10px; font-size:11px; font-weight:700; }
+    .consensus-box {
+      background: linear-gradient(135deg, #0d1420 0%, #111c2e 100%);
+      border: 1px solid var(--border); border-radius: 14px;
+      padding: 22px 24px; margin-bottom: 20px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown("### 🔮 Çoklu Yapay Zeka Fiyat Tahmini")
+    st.markdown("<div style='color:var(--muted);font-size:13px;margin-bottom:18px'>4 farklı AI modeli bağımsız olarak fiyat tahmini yapar. Tahminler yatırım tavsiyesi değildir.</div>", unsafe_allow_html=True)
+
+    fc1, fc2 = st.columns([3,1])
+    with fc1:
+        fc_raw = st.text_input("Tahmin edilecek sembol", value=ticker_input, placeholder="AAPL · THYAO · BTC-USD", key="fc_sym").upper().strip()
+        fc_t = resolve(fc_raw)
+    with fc2:
+        st.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
+        run_fc = st.button("🔮 Tahmin Başlat", use_container_width=True, key="run_fc")
+
+    if run_fc and fc_t:
+        with st.spinner("AI modelleri tahmin üretiyor..."):
+            df_fc = get_data(fc_t, "3mo", "1d")
+            if df_fc.empty:
+                st.error("Veri alınamadı.")
+            else:
+                df_fc = calc(df_fc)
+                info_fc = get_info(fc_t)
+                lc_fc = float(df_fc["Close"].iloc[-1])
+                predictions = {}
+                for mdl in AI_MODELS:
+                    result = ai_price_forecast(fc_t, df_fc, info_fc, st.session_state.groq_key, mdl["id"])
+                    predictions[mdl["id"]] = result
+                st.session_state.ai_predictions = {
+                    "ticker": fc_t, "lc": lc_fc, "preds": predictions, "info": info_fc
+                }
+
+    if st.session_state.ai_predictions and st.session_state.ai_predictions.get("ticker") == (resolve(fc_raw) if 'fc_raw' in dir() else ""):
+        pred_data = st.session_state.ai_predictions
+        lc_fc = pred_data["lc"]
+        curr = pred_data["info"].get("currency", "USD")
+
+        # Konsensüs hesapla
+        all_1d = []; all_1w = []; all_1m = []; signals_list = []
+        for mdl in AI_MODELS:
+            p = pred_data["preds"].get(mdl["id"])
+            if p:
+                try:
+                    all_1d.append(float(p["1gun"])); all_1w.append(float(p["1hafta"]))
+                    all_1m.append(float(p["1ay"])); signals_list.append(p.get("sinyal","NÖTR"))
+                except: pass
+
+        if all_1m:
+            c1d = sum(all_1d)/len(all_1d); c1w = sum(all_1w)/len(all_1w); c1m = sum(all_1m)/len(all_1m)
+            from collections import Counter
+            top_sig = Counter(signals_list).most_common(1)[0][0]
+            sig_class = f"pred-signal-{top_sig}"
+            d1d = (c1d-lc_fc)/lc_fc*100; d1w = (c1w-lc_fc)/lc_fc*100; d1m = (c1m-lc_fc)/lc_fc*100
+            cc1 = "#22c55e" if d1m >= 0 else "#ef4444"
+
+            st.markdown(f"""
+            <div class="consensus-box">
+              <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px">🎯 Konsensüs Tahmini — {pred_data['ticker']}</div>
+              <div style="display:flex;gap:32px;flex-wrap:wrap;align-items:center">
+                <div>
+                  <div class="pred-label">Güncel Fiyat</div>
+                  <div style="font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text)">{lc_fc:.4f} {curr}</div>
+                </div>
+                <div>
+                  <div class="pred-label">1 Günlük</div>
+                  <div class="pred-price" style="color:{('#22c55e' if d1d>=0 else '#ef4444')}">{c1d:.4f} <span style="font-size:13px">({d1d:+.2f}%)</span></div>
+                </div>
+                <div>
+                  <div class="pred-label">1 Haftalık</div>
+                  <div class="pred-price" style="color:{('#22c55e' if d1w>=0 else '#ef4444')}">{c1w:.4f} <span style="font-size:13px">({d1w:+.2f}%)</span></div>
+                </div>
+                <div>
+                  <div class="pred-label">1 Aylık</div>
+                  <div class="pred-price" style="color:{cc1}">{c1m:.4f} <span style="font-size:13px">({d1m:+.2f}%)</span></div>
+                </div>
+                <div style="margin-left:auto">
+                  <div class="pred-label">Konsensüs Sinyali</div>
+                  <span class="{sig_class}">{top_sig}</span>
+                </div>
+              </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # Tahmin grafiği
+            import numpy as np
+            last_date = df_fc.index[-1]
+            future_dates = pd.bdate_range(start=last_date, periods=22)[1:]
+            hist_x = list(df_fc.index[-30:])
+            hist_y = list(df_fc["Close"].iloc[-30:].astype(float))
+
+            fg = go.Figure()
+            fg.add_trace(go.Scatter(
+                x=hist_x, y=hist_y, name="Geçmiş",
+                line=dict(color="#4a5a78", width=2),
+                mode="lines"
+            ))
+            pal_map = {m["id"]: m for m in AI_MODELS}
+            for mdl in AI_MODELS:
+                p = pred_data["preds"].get(mdl["id"])
+                if not p: continue
+                try:
+                    pts_x = [last_date, future_dates[0], future_dates[4], future_dates[-1]]
+                    pts_y = [lc_fc, float(p["1gun"]), float(p["1hafta"]), float(p["1ay"])]
+                    fg.add_trace(go.Scatter(
+                        x=pts_x, y=pts_y, name=f"{mdl['icon']} {mdl['name']}",
+                        line=dict(color=mdl["color"], width=2, dash="dot"),
+                        mode="lines+markers", marker=dict(size=6, color=mdl["color"])
+                    ))
+                except: pass
+            # Konsensüs çizgisi
+            pts_x_c = [last_date, future_dates[0], future_dates[4], future_dates[-1]]
+            pts_y_c = [lc_fc, c1d, c1w, c1m]
+            fg.add_trace(go.Scatter(
+                x=pts_x_c, y=pts_y_c, name="🎯 Konsensüs",
+                line=dict(color="#ffffff", width=3),
+                mode="lines+markers", marker=dict(size=8, color="#ffffff")
+            ))
+            fg.update_layout(
+                paper_bgcolor="#070b14", plot_bgcolor="#0d1420",
+                font=dict(color="#4a5a78", family="Sora"),
+                height=350, margin=dict(l=8,r=8,t=30,b=8),
+                hovermode="x unified",
+                hoverlabel=dict(bgcolor="#111c2e", bordercolor="#1a2840", font_color="#e8edf5"),
+                legend=dict(bgcolor="#0d1420", bordercolor="#1a2840", borderwidth=1,
+                            font=dict(size=11, color="#8899b0"), orientation="h", y=1.08),
+                xaxis=dict(gridcolor="#0f1926", zerolinecolor="#0f1926",
+                           showspikes=True, spikecolor="#e02020"),
+                yaxis=dict(gridcolor="#0f1926", zerolinecolor="#0f1926")
+            )
+            st.plotly_chart(fg, use_container_width=True)
+
+        # Model kartları
+        st.markdown("### Model Tahminleri")
+        cols_fc = st.columns(len(AI_MODELS))
+        for i, mdl in enumerate(AI_MODELS):
+            p = pred_data["preds"].get(mdl["id"])
+            with cols_fc[i]:
+                if p:
+                    try:
+                        v1d = float(p["1gun"]); v1w = float(p["1hafta"]); v1m = float(p["1ay"])
+                        sig = p.get("sinyal", "NÖTR")
+                        d1m = (v1m - lc_fc) / lc_fc * 100
+                        cc = "#22c55e" if d1m >= 0 else "#ef4444"
+                        st.markdown(f"""
+                        <div class="pred-card" style="border-top:3px solid {mdl['color']}">
+                          <div class="pred-model">{mdl['icon']} {mdl['name']}</div>
+                          <div class="pred-label">1 Günlük</div>
+                          <div class="pred-price" style="color:{('#22c55e' if v1d>=lc_fc else '#ef4444')}">{v1d:.4f}</div>
+                          <div class="pred-label" style="margin-top:8px">1 Haftalık</div>
+                          <div class="pred-price" style="color:{('#22c55e' if v1w>=lc_fc else '#ef4444')}">{v1w:.4f}</div>
+                          <div class="pred-label" style="margin-top:8px">1 Aylık</div>
+                          <div class="pred-price" style="color:{cc}">{v1m:.4f} <span style="font-size:12px">({d1m:+.1f}%)</span></div>
+                          <div style="margin-top:10px"><span class="pred-signal-{sig}">{sig}</span></div>
+                          <div style="color:var(--muted);font-size:10px;margin-top:8px;line-height:1.4">{p.get('yorum','')}</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    except:
+                        st.markdown(f"<div class='pred-card'><div class='pred-model'>{mdl['icon']} {mdl['name']}</div><div style='color:var(--muted);font-size:12px'>Tahmin alınamadı</div></div>", unsafe_allow_html=True)
+                else:
+                    st.markdown(f"<div class='pred-card'><div class='pred-model'>{mdl['icon']} {mdl['name']}</div><div style='color:var(--muted);font-size:12px'>Tahmin bekleniyor...</div></div>", unsafe_allow_html=True)
+
+        st.markdown("<div style='color:#2a3a52;font-size:11px;margin-top:16px;text-align:center'>⚠️ AI tahminleri yalnızca bilgilendirme amaçlıdır. Yatırım tavsiyesi değildir.</div>", unsafe_allow_html=True)
+    elif not st.session_state.ai_predictions:
+        st.markdown("""
+        <div class="onboard-card">
+          <h4>🔮 AI Tahmin Nasıl Çalışır?</h4>
+          <p>Yukarıya bir sembol girin ve <b>Tahmin Başlat</b> butonuna tıklayın.<br>
+          4 farklı yapay zeka modeli (Llama 3.3 70B, Llama 3 8B, Gemma 2, Mixtral) bağımsız olarak
+          1 günlük, 1 haftalık ve 1 aylık fiyat tahmini üretir.<br>
+          Sonuçlar grafik üzerinde görselleştirilir ve bir konsensüs tahmini hesaplanır.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+# ── TAB 4: PORTFÖY ─────────────────────────────────────────────────────────────
+with tab4:
     st.markdown("### Portföy Takibi")
     if not st.session_state.portfolio:
         st.markdown("""
@@ -1133,7 +1435,7 @@ with tab3:
                     plp=(pr-cost)/cost*100 if cost>0 else 0
                     tc+=cost*item["q"]
                     tv+=val
-                    rows.append({"t":item["t"],"q":item["q"],"c":cost,"p":pr,"chg":chg,"v":val,"pl":pl,"plp":plp})
+                    rows.append({"t":item["t"],"q":item["q"],"c":cost,"p":pr,"chg":chg,"v":val,"pl":pl,"plp":plp,"type":item.get("type","📈 Hisse")})
             except:
                 pass
 
@@ -1152,19 +1454,21 @@ with tab3:
             st.markdown("---")
 
             # Hisse tablosu
-            hcols=st.columns([1.5,0.6,0.9,0.9,0.9,1.1,1.1,1.1,0.4])
-            for hc,lbl in zip(hcols,["Hisse","Adet","Alış","Güncel","Değişim","Değer","K/Z","K/Z %",""]):
+            hcols=st.columns([0.5,1.5,0.6,0.9,0.9,0.9,1.1,1.1,1.1,0.4])
+            for hc,lbl in zip(hcols,["Tür","Varlık","Adet","Alış","Güncel","Değişim","Değer","K/Z","K/Z %",""]):
                 hc.markdown(f"<div style='color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1px;padding-bottom:6px'>{lbl}</div>",unsafe_allow_html=True)
 
             for i,row in enumerate(rows):
                 cc="#22c55e" if row["chg"]>=0 else "#ef4444"
                 pc2="#22c55e" if row["pl"]>=0 else "#ef4444"
-                cols=st.columns([1.5,0.6,0.9,0.9,0.9,1.1,1.1,1.1,0.4])
+                atype = row.get('type','📈 Hisse').split()[0]  # sadece emoji
+                cols=st.columns([0.5,1.5,0.6,0.9,0.9,0.9,1.1,1.1,1.1,0.4])
                 vals=[
+                    f"<span style='font-size:16px'>{atype}</span>",
                     f"<b style='color:var(--text)'>{row['t']}</b>",
-                    str(int(row['q'])),
-                    f"{row['c']:.2f}",
-                    f"{row['p']:.2f}",
+                    f"{row['q']:.4f}",
+                    f"{row['c']:.4f}",
+                    f"{row['p']:.4f}",
                     f"<span style='color:{cc}'>{row['chg']:+.2f}%</span>",
                     f"{row['v']:,.2f}",
                     f"<span style='color:{pc2}'>{row['pl']:+,.2f}</span>",
@@ -1172,7 +1476,7 @@ with tab3:
                 ]
                 for ci,v in enumerate(vals):
                     cols[ci].markdown(f"<div style='font-family:var(--mono);font-size:12px;padding:8px 0'>{v}</div>",unsafe_allow_html=True)
-                if cols[8].button("✕",key=f"pd{i}"):
+                if cols[9].button("✕",key=f"pd{i}"):
                     delete_portfolio_item(st.session_state.username, row["t"])
                     st.session_state.portfolio = [p for p in st.session_state.portfolio if p["t"] != row["t"]]
                     st.rerun()
@@ -1281,8 +1585,8 @@ with tab3:
                 )
                 st.plotly_chart(fp, use_container_width=True)
 
-# ── TAB 4: ALARMLAR ────────────────────────────────────────────────────────────
-with tab4:
+# ── TAB 5: ALARMLAR ────────────────────────────────────────────────────────────
+with tab5:
     st.markdown("### Fiyat Alarmları")
     st.markdown("<div style='color:var(--muted);font-size:12px;margin-bottom:14px'>Fiyat hedefine ulaştığında e-posta bildirimi gönderilir.</div>",unsafe_allow_html=True)
 
