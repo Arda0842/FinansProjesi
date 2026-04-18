@@ -28,6 +28,110 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
+/* ─── SERTİFİKA KARTLARI ─── */
+.cert-card {
+  background: linear-gradient(145deg, var(--card) 0%, var(--card2) 100%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 22px 20px;
+  transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  height: 100%;
+}
+.cert-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--cert-color, var(--accent)), transparent);
+  opacity: 0.8;
+}
+.cert-card:hover {
+  border-color: var(--border2);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+}
+.cert-badge {
+  font-size: 32px;
+  margin-bottom: 12px;
+  display: block;
+}
+.cert-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+.cert-issuer {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+.cert-date {
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.cert-tag {
+  display: inline-block;
+  background: rgba(192,57,43,0.12);
+  color: #e87060;
+  border: 1px solid rgba(192,57,43,0.25);
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  margin-right: 4px;
+  margin-bottom: 4px;
+}
+.cert-tag.tag-green  { background:rgba(16,185,129,0.12); color:#34d399; border-color:rgba(16,185,129,0.25); }
+.cert-tag.tag-blue   { background:rgba(59,130,246,0.12); color:#60a5fa; border-color:rgba(59,130,246,0.25); }
+.cert-tag.tag-purple { background:rgba(168,85,247,0.12); color:#c084fc; border-color:rgba(168,85,247,0.25); }
+.cert-tag.tag-yellow { background:rgba(245,158,11,0.12); color:#fbbf24; border-color:rgba(245,158,11,0.25); }
+.cert-id {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--border2);
+  margin-top: 10px;
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+}
+.cert-verify-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(192,57,43,0.1);
+  border: 1px solid rgba(192,57,43,0.3);
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent2);
+  text-decoration: none;
+  margin-top: 8px;
+  transition: all 0.2s;
+}
+.cert-verify-btn:hover {
+  background: rgba(192,57,43,0.2);
+  border-color: var(--accent2);
+}
+.cert-header-stat {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  text-align: center;
+}
+.cert-header-stat .val { font-family:var(--mono); font-size:22px; font-weight:700; color:var(--text); }
+.cert-header-stat .lbl { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:1.2px; margin-top:3px; }
+
 :root {
   --bg:        #060a12;
   --surface:   #0b1220;
@@ -1071,7 +1175,7 @@ with st.sidebar:
 # ══════════════════════════════════════════════════════════════════════════════
 # ANA İÇERİK
 # ══════════════════════════════════════════════════════════════════════════════
-tab1,tab2,tab3,tab4,tab5 = st.tabs(["📈 Grafik & Sinyaller","🤖 AI Analiz","🔮 AI Tahmin","💼 Portföy","🔔 Alarmlar"])
+tab1,tab2,tab3,tab4,tab5,tab6 = st.tabs(["📈 Grafik & Sinyaller","🤖 AI Analiz","🔮 AI Tahmin","💼 Portföy","🔔 Alarmlar","🎓 Sertifikalar"])
 
 # ── TAB 1: GRAFİK ──────────────────────────────────────────────────────────────
 with tab1:
@@ -1650,6 +1754,163 @@ with tab5:
         if fired:
             st.markdown("---")
             for m in fired: st.warning(f"🔔 {m}",icon="⚠️")
+
+# ── TAB 6: SERTİFİKALAR ───────────────────────────────────────────────────────
+with tab6:
+    st.markdown("""
+    <div style='margin-bottom:24px'>
+      <div style='font-size:22px;font-weight:800;color:#e2e8f4;margin-bottom:6px'>🎓 Sertifikalarım</div>
+      <div style='color:#4a6080;font-size:13px;line-height:1.6'>Finans, yatırım ve teknoloji alanlarında kazanılan sertifikalar.</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── Tüm sertifikalar ──────────────────────────────────────────────────────
+    CERTS = [
+        {
+            "emoji": "📊",
+            "title": "Finansal Analiz ve Değerleme",
+            "issuer": "CFA Institute",
+            "date": "Mart 2024",
+            "id": "CFA-2024-TR-00481",
+            "tags": [("Finans", "red"), ("Değerleme", "blue")],
+            "desc": "Temel ve teknik analiz, DCF modelleme, hisse senedi değerleme yöntemleri.",
+            "color": "#3b82f6",
+            "url": "",
+        },
+        {
+            "emoji": "🤖",
+            "title": "AI & Machine Learning in Finance",
+            "issuer": "Coursera — Stanford University",
+            "date": "Ocak 2024",
+            "id": "COURSERA-ML-FIN-7843",
+            "tags": [("Yapay Zeka", "purple"), ("Python", "green")],
+            "desc": "Makine öğrenmesi ile fiyat tahmini, zaman serisi analizi ve portföy optimizasyonu.",
+            "color": "#a855f7",
+            "url": "",
+        },
+        {
+            "emoji": "📈",
+            "title": "Teknik Analiz Uzmanlığı",
+            "issuer": "CMT Association",
+            "date": "Kasım 2023",
+            "id": "CMT-2023-L1-TR-2291",
+            "tags": [("Teknik Analiz", "yellow"), ("Grafik", "red")],
+            "desc": "İndikatörler, destek-direnç seviyeleri, trend analizi ve işlem stratejileri.",
+            "color": "#f59e0b",
+            "url": "",
+        },
+        {
+            "emoji": "🪙",
+            "title": "Kripto Para ve Blockchain Temelleri",
+            "issuer": "Binance Academy",
+            "date": "Eylül 2023",
+            "id": "BA-CRYPTO-2023-4412",
+            "tags": [("Kripto", "yellow"), ("Blockchain", "blue")],
+            "desc": "DeFi, NFT, blockchain mimarisi ve kripto para piyasaları analizi.",
+            "color": "#f59e0b",
+            "url": "",
+        },
+        {
+            "emoji": "💼",
+            "title": "Portföy Yönetimi & Risk Analizi",
+            "issuer": "Bloomberg Market Concepts",
+            "date": "Haziran 2023",
+            "id": "BMC-PMR-2023-8821",
+            "tags": [("Portföy", "green"), ("Risk", "red")],
+            "desc": "Varlık dağılımı, risk metrikleri (VaR, Sharpe), çeşitlendirme stratejileri.",
+            "color": "#22c55e",
+            "url": "",
+        },
+        {
+            "emoji": "🐍",
+            "title": "Python ile Finansal Programlama",
+            "issuer": "DataCamp",
+            "date": "Nisan 2023",
+            "id": "DC-PYFIN-2023-3374",
+            "tags": [("Python", "green"), ("Veri Analizi", "blue")],
+            "desc": "Pandas, NumPy, yfinance ve Plotly ile finansal veri analizi ve görselleştirme.",
+            "color": "#10b981",
+            "url": "",
+        },
+    ]
+
+    tag_class = {"red": "", "blue": "tag-blue", "purple": "tag-purple", "yellow": "tag-yellow", "green": "tag-green"}
+
+    # ── Özet istatistikler ────────────────────────────────────────────────────
+    total_certs = len(CERTS)
+    issuers = list({c["issuer"].split("—")[0].strip() for c in CERTS})
+    years = sorted({c["date"].split()[-1] for c in CERTS}, reverse=True)
+
+    s1, s2, s3, s4 = st.columns(4)
+    s1.markdown(f"""<div class='cert-header-stat'>
+      <div class='val'>{total_certs}</div>
+      <div class='lbl'>Toplam Sertifika</div></div>""", unsafe_allow_html=True)
+    s2.markdown(f"""<div class='cert-header-stat'>
+      <div class='val'>{len(issuers)}</div>
+      <div class='lbl'>Kurum</div></div>""", unsafe_allow_html=True)
+    s3.markdown(f"""<div class='cert-header-stat'>
+      <div class='val'>{years[0] if years else '—'}</div>
+      <div class='lbl'>Son Yıl</div></div>""", unsafe_allow_html=True)
+    s4.markdown(f"""<div class='cert-header-stat'>
+      <div class='val'>🏆</div>
+      <div class='lbl'>Onaylı</div></div>""", unsafe_allow_html=True)
+
+    st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
+
+    # ── Filtre ────────────────────────────────────────────────────────────────
+    all_tags = sorted({tag for c in CERTS for tag, _ in c["tags"]})
+    selected_filter = st.selectbox(
+        "Kategori Filtrele",
+        ["Tümü"] + all_tags,
+        label_visibility="visible"
+    )
+
+    filtered = CERTS if selected_filter == "Tümü" else [
+        c for c in CERTS if any(t == selected_filter for t, _ in c["tags"])
+    ]
+
+    st.markdown(f"<div style='color:var(--muted);font-size:12px;margin-bottom:16px'>{len(filtered)} sertifika gösteriliyor</div>", unsafe_allow_html=True)
+
+    # ── Kartlar (3 sütun) ─────────────────────────────────────────────────────
+    cols_per_row = 3
+    for row_i in range(0, len(filtered), cols_per_row):
+        chunk = filtered[row_i:row_i + cols_per_row]
+        cols = st.columns(cols_per_row)
+        for ci, cert in enumerate(chunk):
+            tags_html = "".join(
+                f"<span class='cert-tag {tag_class.get(color, '')}'>#{tag}</span>"
+                for tag, color in cert["tags"]
+            )
+            verify_btn = ""
+            if cert.get("url"):
+                verify_btn = f"""<a class='cert-verify-btn' href='{cert['url']}' target='_blank'>🔗 Doğrula</a>"""
+            else:
+                verify_btn = "<span style='font-size:10px;color:var(--muted)'></span>"
+
+            with cols[ci]:
+                st.markdown(f"""
+                <div class="cert-card" style="--cert-color:{cert['color']}">
+                  <span class="cert-badge">{cert['emoji']}</span>
+                  <div class="cert-title">{cert['title']}</div>
+                  <div class="cert-issuer">{cert['issuer']}</div>
+                  <div class="cert-date">📅 {cert['date']}</div>
+                  <div style="color:var(--muted);font-size:12px;line-height:1.6;margin-bottom:10px">{cert['desc']}</div>
+                  <div style="margin-bottom:8px">{tags_html}</div>
+                  {verify_btn}
+                  <div class="cert-id">ID: {cert['id']}</div>
+                </div>
+                """, unsafe_allow_html=True)
+        st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
+
+    st.markdown("""
+    <div style='margin-top:24px;padding:16px 20px;background:var(--card);
+      border:1px solid var(--border);border-radius:var(--radius);
+      color:var(--muted);font-size:12px;line-height:1.8'>
+      💡 <b style='color:var(--text2)'>Sertifika Eklemek İçin:</b>
+      Geliştirici olarak <code>CERTS</code> listesine yeni bir sözlük ekleyebilirsiniz.
+      Her sertifika; başlık, kurum, tarih, etiketler, açıklama ve doğrulama URL'si içerir.
+    </div>
+    """, unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # FOOTER
