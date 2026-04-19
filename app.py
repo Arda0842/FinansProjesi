@@ -385,6 +385,27 @@ hr { border:none; border-top:1px solid var(--border); margin:14px 0; }
   content:''; position:absolute; top:0; left:0; right:0; height:3px;
   background:linear-gradient(90deg,var(--accent),var(--blue),var(--green));
 }
+
+/* ─── REGRESYON KARTI ─── */
+.reg-model-card {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:var(--radius-lg); padding:18px 16px;
+  transition:all 0.2s; height:100%; position:relative; overflow:hidden;
+}
+.reg-model-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:3px;
+  background:var(--reg-color, var(--accent));
+}
+.reg-model-card:hover { border-color:var(--border2); background:var(--card2); transform:translateY(-2px); box-shadow:var(--shadow); }
+.reg-metric-label { font-size:9px; text-transform:uppercase; letter-spacing:1.3px; color:var(--muted); font-weight:600; margin-bottom:3px; }
+.reg-metric-val   { font-family:var(--mono); font-size:16px; font-weight:700; color:var(--text); }
+.reg-metric-good  { color:#34d399; }
+.reg-metric-mid   { color:#fbbf24; }
+.reg-metric-bad   { color:#f87171; }
+.reg-future-table { width:100%; border-collapse:collapse; font-family:var(--mono); font-size:12px; }
+.reg-future-table th { color:var(--muted); font-size:9px; text-transform:uppercase; letter-spacing:1.2px; font-weight:600; padding:8px 10px; border-bottom:1px solid var(--border); text-align:left; }
+.reg-future-table td { padding:9px 10px; border-bottom:1px solid var(--border); color:var(--text); }
+.reg-future-table tr:hover td { background:var(--card2); }
 </style>
 """, unsafe_allow_html=True)
 
@@ -1059,8 +1080,235 @@ Sadece aşağıdaki JSON formatını döndür, başka hiçbir şey yazma:
     return None
 
 # ══════════════════════════════════════════════════════════════════════════════
+# REGRESYON MODELLERİ
+# ══════════════════════════════════════════════════════════════════════════════
+
+REG_MODELS_DEF = [
+    {"key": "linear",  "name": "Doğrusal Regresyon",  "icon": "📐", "color": "#3b82f6"},
+    {"key": "poly2",   "name": "Polinom (Derece 2)",   "icon": "〰️",  "color": "#a855f7"},
+    {"key": "poly3",   "name": "Polinom (Derece 3)",   "icon": "〰️",  "color": "#ec4899"},
+    {"key": "ridge",   "name": "Ridge Regresyon",      "icon": "🔒", "color": "#f59e0b"},
+    {"key": "svr",     "name": "SVR",                  "icon": "⚙️",  "color": "#06b6d4"},
+    {"key": "forest",  "name": "Random Forest",        "icon": "🌲", "color": "#22c55e"},
+]
+
+def _build_features(df: pd.DataFrame) -> pd.DataFrame:
+    """Teknik göstergelerden özellik matrisi oluştur."""
+    df = df.copy()
+    c = df["Close"].squeeze().astype(float)
+
+    # Lag fiyatlar
+    for lag in [1, 2, 3, 5, 10]:
+        df[f"lag_{lag}"] = c.shift(lag)
+
+    # Getiri
+    df["ret_1"] = c.pct_change(1)
+    df["ret_5"] = c.pct_change(5)
+
+    # Teknik indikatörler (varsa)
+    for col in ["RSI", "MACD", "EMA20", "EMA50", "ATR%", "StochK", "CMF", "OBV", "VolR"]:
+        if col in df.columns:
+            df[f"feat_{col}"] = df[col].squeeze().astype(float)
+
+    # Zaman özellikleri
+    if hasattr(df.index, "dayofweek"):
+        df["dow_sin"] = np.sin(2 * np.pi * df.index.dayofweek / 5)
+        df["dow_cos"] = np.cos(2 * np.pi * df.index.dayofweek / 5)
+        df["month_sin"] = np.sin(2 * np.pi * df.index.month / 12)
+        df["month_cos"] = np.cos(2 * np.pi * df.index.month / 12)
+
+    # Hedef sütun
+    df["target"] = c.shift(-1)          # yarınki kapanış
+    return df.dropna()
+
+
+def _make_sklearn_model(key: str):
+    """Scikit-learn model nesnesi döndür."""
+    from sklearn.linear_model import LinearRegression, Ridge
+    from sklearn.svm import SVR
+    from sklearn.ensemble import RandomForestRegressor
+    from sklearn.preprocessing import PolynomialFeatures
+    from sklearn.pipeline import Pipeline
+    from sklearn.preprocessing import StandardScaler
+
+    if key == "linear":
+        return Pipeline([("scl", StandardScaler()), ("reg", LinearRegression())])
+    if key == "poly2":
+        return Pipeline([("scl", StandardScaler()), ("poly", PolynomialFeatures(2, include_bias=False)), ("reg", LinearRegression())])
+    if key == "poly3":
+        return Pipeline([("scl", StandardScaler()), ("poly", PolynomialFeatures(3, include_bias=False)), ("reg", LinearRegression())])
+    if key == "ridge":
+        return Pipeline([("scl", StandardScaler()), ("reg", Ridge(alpha=10.0))])
+    if key == "svr":
+        return Pipeline([("scl", StandardScaler()), ("reg", SVR(kernel="rbf", C=100, epsilon=0.1, gamma="scale"))])
+    if key == "forest":
+        return Pipeline([("reg", RandomForestRegressor(n_estimators=200, max_depth=8, random_state=42, n_jobs=-1))])
+    raise ValueError(f"Bilinmeyen model: {key}")
+
+
+def _calc_metrics(y_true, y_pred) -> dict:
+    """R², RMSE, MAPE hesapla."""
+    y_true = np.array(y_true, dtype=float)
+    y_pred = np.array(y_pred, dtype=float)
+    ss_res = np.sum((y_true - y_pred) ** 2)
+    ss_tot = np.sum((y_true - np.mean(y_true)) ** 2)
+    r2   = 1 - ss_res / (ss_tot + 1e-9)
+    rmse = np.sqrt(np.mean((y_true - y_pred) ** 2))
+    mape = np.mean(np.abs((y_true - y_pred) / (y_true + 1e-9))) * 100
+    return {"r2": r2, "rmse": rmse, "mape": mape}
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def run_regression(ticker: str, period: str, model_keys: tuple) -> dict:
+    """Seçilen modelleri eğit; metrik ve gelecek tahminleri döndür."""
+    df_raw = get_data(ticker, period, "1d")
+    if df_raw.empty:
+        return {}
+    df_raw = calc(df_raw)
+    feat_df = _build_features(df_raw)
+
+    feat_cols = [c for c in feat_df.columns if c.startswith(("lag_", "ret_", "feat_", "dow_", "month_"))]
+    X = feat_df[feat_cols].values
+    y = feat_df["target"].values
+    dates = feat_df.index
+    close_vals = feat_df["Close"].squeeze().astype(float).values
+
+    split = max(10, int(len(X) * 0.80))
+    X_train, X_test = X[:split], X[split:]
+    y_train, y_test = y[:split], y[split:]
+
+    results = {}
+    for key in model_keys:
+        try:
+            mdl = _make_sklearn_model(key)
+            mdl.fit(X_train, y_train)
+            y_pred_test = mdl.predict(X_test)
+            metrics = _calc_metrics(y_test, y_pred_test)
+
+            # Tüm veri üzerinde in-sample tahmin (grafik için)
+            y_pred_all = mdl.predict(X)
+
+            # İleriye projeksiyon (yinelemeli)
+            future_preds = _iterative_forecast(mdl, feat_df, feat_cols, steps=22)
+
+            results[key] = {
+                "metrics":      metrics,
+                "dates":        list(dates),
+                "actual":       list(close_vals),
+                "pred_all":     list(y_pred_all),
+                "split_idx":    split,
+                "future_preds": future_preds,
+                "feat_cols":    feat_cols,
+            }
+        except Exception as ex:
+            results[key] = {"error": str(ex)}
+
+    results["_last_close"] = float(df_raw["Close"].iloc[-1])
+    results["_last_date"]  = df_raw.index[-1]
+    return results
+
+
+def _iterative_forecast(model, feat_df: pd.DataFrame, feat_cols: list, steps: int = 22) -> list:
+    """Son bilinen özellik vektörünü güncelleyerek adım adım tahmin üret."""
+    last_row = feat_df[feat_cols].iloc[-1].values.copy().astype(float)
+    preds = []
+    for _ in range(steps):
+        p = float(model.predict(last_row.reshape(1, -1))[0])
+        preds.append(p)
+        # lag_1 ← tahmin edilen fiyat, diğer lagları kaydır
+        lag_cols = [c for c in feat_cols if c.startswith("lag_")]
+        lag_nums = sorted([int(c.split("_")[1]) for c in lag_cols])
+        lag_map  = {f"lag_{n}": i for i, n in enumerate(lag_nums)}
+        if lag_map:
+            new_row = last_row.copy()
+            for lag_name, idx in lag_map.items():
+                lag_n = int(lag_name.split("_")[1])
+                if lag_n == 1:
+                    new_row[idx] = p
+                elif f"lag_{lag_n-1}" in lag_map:
+                    new_row[idx] = last_row[lag_map[f"lag_{lag_n-1}"]]
+            last_row = new_row
+    return preds
+
+
+def regression_chart(results: dict, model_keys: list, show_future: bool = True) -> go.Figure:
+    """Gerçek fiyat + model tahmin/projeksiyon grafiği."""
+    model_info = {m["key"]: m for m in REG_MODELS_DEF}
+
+    # Herhangi bir modelden ortak zaman serisi al
+    ref_key = next((k for k in model_keys if k in results and "dates" in results[k]), None)
+    if ref_key is None:
+        return go.Figure()
+
+    ref = results[ref_key]
+    dates     = ref["dates"]
+    actual    = ref["actual"]
+    split_idx = ref["split_idx"]
+    last_date = results.get("_last_date", dates[-1])
+
+    fig = go.Figure()
+
+    # Gerçek fiyat — train bölgesi
+    fig.add_trace(go.Scatter(
+        x=dates[:split_idx], y=actual[:split_idx],
+        name="Gerçek (Eğitim)", mode="lines",
+        line=dict(color="#4a5a78", width=1.5),
+    ))
+    # Gerçek fiyat — test bölgesi
+    fig.add_trace(go.Scatter(
+        x=dates[split_idx:], y=actual[split_idx:],
+        name="Gerçek (Test)", mode="lines",
+        line=dict(color="#e2e8f4", width=2),
+    ))
+
+    # Dikey bölge ayırıcı
+    fig.add_vline(x=dates[split_idx], line_dash="dot", line_color="#1c2d47", line_width=1)
+
+    for key in model_keys:
+        if key not in results or "error" in results[key]:
+            continue
+        r    = results[key]
+        info = model_info.get(key, {"name": key, "color": "#ffffff"})
+
+        # Test tahmini çizgisi
+        fig.add_trace(go.Scatter(
+            x=dates[split_idx:], y=r["pred_all"][split_idx:],
+            name=f"{info['name']}",
+            mode="lines",
+            line=dict(color=info["color"], width=2, dash="dash"),
+        ))
+
+        # Gelecek projeksiyon
+        if show_future and r.get("future_preds"):
+            fut_dates = list(pd.bdate_range(start=last_date, periods=len(r["future_preds"]) + 1)[1:])
+            fig.add_trace(go.Scatter(
+                x=fut_dates, y=r["future_preds"],
+                name=f"{info['name']} (Proj.)",
+                mode="lines+markers",
+                line=dict(color=info["color"], width=1.5, dash="dot"),
+                marker=dict(size=4, color=info["color"]),
+                opacity=0.75,
+            ))
+
+    fig.update_layout(
+        paper_bgcolor="#060a12", plot_bgcolor="#0b1220",
+        font=dict(color="#4a6080", family="Inter, sans-serif"),
+        height=480, margin=dict(l=8, r=8, t=36, b=8),
+        hovermode="x unified",
+        hoverlabel=dict(bgcolor="#131f30", bordercolor="#1c2d47", font_color="#e2e8f4",
+                        font_family="JetBrains Mono, monospace"),
+        legend=dict(bgcolor="#0f1929", bordercolor="#1c2d47", borderwidth=1,
+                    font=dict(size=10, color="#a8b8d0"), orientation="h", y=1.04, x=0),
+        xaxis=dict(gridcolor="#0d1a28", zerolinecolor="#0d1a28",
+                   showspikes=True, spikecolor="#c0392b", spikethickness=1, spikedash="dot"),
+        yaxis=dict(gridcolor="#0d1a28", zerolinecolor="#0d1a28"),
+    )
+    return fig
+
+# ══════════════════════════════════════════════════════════════════════════════
 # E-POSTA
 # ══════════════════════════════════════════════════════════════════════════════
+
 def send_email(to, ticker, atype, target, current):
     try:
         sender=st.secrets["EMAIL_SENDER"]; pwd=st.secrets["EMAIL_PASSWORD"]
@@ -1175,7 +1423,7 @@ with st.sidebar:
 # ══════════════════════════════════════════════════════════════════════════════
 # ANA İÇERİK
 # ══════════════════════════════════════════════════════════════════════════════
-tab1,tab2,tab3,tab4,tab5,tab6 = st.tabs(["📈 Grafik & Sinyaller","🤖 AI Analiz","🔮 AI Tahmin","💼 Portföy","🔔 Alarmlar","🎓 Sertifikalar"])
+tab1,tab2,tab3,tab4,tab5,tab6,tab7 = st.tabs(["📈 Grafik & Sinyaller","🤖 AI Analiz","🔮 AI Tahmin","💼 Portföy","🔔 Alarmlar","🎓 Sertifikalar","📉 Regresyon"])
 
 # ── TAB 1: GRAFİK ──────────────────────────────────────────────────────────────
 with tab1:
@@ -1911,6 +2159,235 @@ with tab6:
       Her sertifika; başlık, kurum, tarih, etiketler, açıklama ve doğrulama URL'si içerir.
     </div>
     """, unsafe_allow_html=True)
+
+# ── TAB 7: REGRESYON ──────────────────────────────────────────────────────────
+with tab7:
+    st.markdown("""
+    <div style='margin-bottom:20px'>
+      <div style='font-size:22px;font-weight:800;color:#e2e8f4;margin-bottom:6px'>📉 Regresyon Tabanlı Fiyat Tahmini</div>
+      <div style='color:#4a6080;font-size:13px;line-height:1.6'>
+        Makine öğrenmesi regresyon modelleri ile hisse fiyat projeksiyonu.
+        API gerektirmez — tamamen yerel hesaplama.
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── Kontroller ────────────────────────────────────────────────────────────
+    rc1, rc2, rc3 = st.columns([2, 1.2, 0.8])
+    with rc1:
+        rg_raw = st.text_input(
+            "Sembol", value=ticker_input,
+            placeholder="AAPL · THYAO · BTC-USD", key="rg_sym"
+        ).upper().strip()
+        rg_ticker = resolve(rg_raw)
+        if rg_ticker != rg_raw and rg_raw:
+            st.caption(f"🇹🇷 → **{rg_ticker}**")
+    with rc2:
+        rg_period = st.selectbox(
+            "Eğitim Dönemi",
+            ["3mo", "6mo", "1y", "2y"],
+            index=1, key="rg_period"
+        )
+    with rc3:
+        st.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
+        rg_run = st.button("⚙️ Modeli Eğit", use_container_width=True, key="rg_run")
+
+    # Model seçimi
+    st.markdown("<div style='color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1.2px;font-weight:600;margin:8px 0 6px'>Model Seçimi</div>", unsafe_allow_html=True)
+    rg_model_cols = st.columns(len(REG_MODELS_DEF))
+    rg_selected_keys = []
+    for i, mdef in enumerate(REG_MODELS_DEF):
+        with rg_model_cols[i]:
+            checked = st.checkbox(
+                f"{mdef['icon']} {mdef['name']}",
+                value=(mdef["key"] in ["linear", "ridge", "forest"]),
+                key=f"rg_chk_{mdef['key']}"
+            )
+            if checked:
+                rg_selected_keys.append(mdef["key"])
+
+    show_proj = st.toggle("🔮 Gelecek projeksiyonunu göster (22 iş günü)", value=True, key="rg_proj")
+
+    # ── Eğitim & Tahmin ───────────────────────────────────────────────────────
+    if rg_run and rg_ticker and rg_selected_keys:
+        st.session_state["rg_results"] = None   # cache temizle
+        st.session_state["rg_ticker_last"] = rg_ticker
+        st.session_state["rg_period_last"] = rg_period
+        st.session_state["rg_keys_last"]   = tuple(rg_selected_keys)
+
+    # Sonuçları yükle (ilk açılışta ya da yeni eğitimde)
+    if rg_run and rg_ticker and rg_selected_keys:
+        with st.spinner("Modeller eğitiliyor… Bu birkaç saniye sürebilir."):
+            rg_res = run_regression(rg_ticker, rg_period, tuple(rg_selected_keys))
+            st.session_state["rg_results"]     = rg_res
+            st.session_state["rg_ticker_last"] = rg_ticker
+            st.session_state["rg_period_last"] = rg_period
+            st.session_state["rg_keys_last"]   = tuple(rg_selected_keys)
+
+    rg_res = st.session_state.get("rg_results")
+    rg_keys_used = list(st.session_state.get("rg_keys_last", ()))
+    rg_ticker_used = st.session_state.get("rg_ticker_last", "")
+
+    if rg_res:
+        last_close = rg_res.get("_last_close", 0.0)
+        last_date  = rg_res.get("_last_date")
+
+        # ── Model Performans Kartları ─────────────────────────────────────────
+        st.markdown("---")
+        st.markdown("### 📊 Model Performans Metrikleri")
+        st.markdown("<div style='color:var(--muted);font-size:12px;margin-bottom:12px'>%20 test seti üzerinde hesaplanmıştır. Daha yüksek R² ve daha düşük RMSE/MAPE daha iyi performansı gösterir.</div>", unsafe_allow_html=True)
+
+        valid_keys = [k for k in rg_keys_used if k in rg_res and "metrics" in rg_res.get(k, {})]
+        if valid_keys:
+            metric_cols = st.columns(len(valid_keys))
+            for ci, key in enumerate(valid_keys):
+                r     = rg_res[key]
+                m     = r["metrics"]
+                mdef  = next((x for x in REG_MODELS_DEF if x["key"] == key), {"name": key, "icon": "?", "color": "#fff"})
+                r2    = m["r2"]
+                rmse  = m["rmse"]
+                mape  = m["mape"]
+
+                r2_cls   = "reg-metric-good" if r2 > 0.85 else ("reg-metric-mid" if r2 > 0.60 else "reg-metric-bad")
+                mape_cls = "reg-metric-good" if mape < 2  else ("reg-metric-mid" if mape < 5  else "reg-metric-bad")
+
+                with metric_cols[ci]:
+                    st.markdown(f"""
+                    <div class="reg-model-card" style="--reg-color:{mdef['color']}">
+                      <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:14px">
+                        {mdef['icon']} {mdef['name']}
+                      </div>
+                      <div class="reg-metric-label">R² Skoru</div>
+                      <div class="reg-metric-val {r2_cls}">{r2:.4f}</div>
+                      <div style="height:10px"></div>
+                      <div class="reg-metric-label">RMSE</div>
+                      <div class="reg-metric-val">{rmse:.4f}</div>
+                      <div style="height:10px"></div>
+                      <div class="reg-metric-label">MAPE</div>
+                      <div class="reg-metric-val {mape_cls}">{mape:.2f}%</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+            # En iyi model rozeti
+            best_key = max(valid_keys, key=lambda k: rg_res[k]["metrics"]["r2"])
+            best_def = next((x for x in REG_MODELS_DEF if x["key"] == best_key), {"name": best_key, "icon": ""})
+            st.markdown(
+                f"<div style='margin-top:10px;font-size:12px;color:var(--muted)'>🏆 En iyi model: "
+                f"<span style='color:#34d399;font-weight:700'>{best_def['icon']} {best_def['name']}</span> "
+                f"(R² = {rg_res[best_key]['metrics']['r2']:.4f})</div>",
+                unsafe_allow_html=True
+            )
+
+        # ── Grafik ────────────────────────────────────────────────────────────
+        st.markdown("---")
+        st.markdown("### 📈 Fiyat & Projeksiyon Grafiği")
+        st.markdown(
+            "<div style='color:var(--muted);font-size:11px;margin-bottom:8px'>"
+            "Kesik çizgi → model testi | Noktalı çizgi → 22 iş günü ileriye projeksiyon | "
+            "Dikey çizgi → eğitim/test ayrımı</div>",
+            unsafe_allow_html=True
+        )
+        fig_reg = regression_chart(rg_res, valid_keys, show_future=show_proj)
+        st.plotly_chart(fig_reg, use_container_width=True, config={"displayModeBar": True})
+
+        # ── Gelecek Tahmin Tablosu ─────────────────────────────────────────────
+        if show_proj and valid_keys:
+            st.markdown("---")
+            st.markdown("### 🔮 Gelecek Fiyat Projeksiyon Tablosu")
+            st.markdown(
+                f"<div style='color:var(--muted);font-size:11px;margin-bottom:12px'>"
+                f"Güncel fiyat: <span style='font-family:var(--mono);color:var(--text);font-weight:700'>{last_close:.4f}</span> | "
+                f"Son veri: <span style='font-family:var(--mono);color:var(--text)'>{str(last_date)[:10]}</span></div>",
+                unsafe_allow_html=True
+            )
+
+            if last_date is not None:
+                fut_dates = list(pd.bdate_range(start=last_date, periods=23)[1:])  # 22 iş günü
+                milestones = {0: "1 Gün", 4: "1 Hafta", 9: "2 Hafta", 21: "1 Ay"}
+
+                # Tablo başlığı
+                hdr_model_cells = "".join(
+                    f"<th>{next((x['icon']+' '+x['name'] for x in REG_MODELS_DEF if x['key']==k), k)}</th>"
+                    for k in valid_keys
+                )
+                rows_html = f"""
+                <div style="overflow-x:auto">
+                <table class="reg-future-table">
+                  <thead><tr>
+                    <th>Tarih</th>
+                    <th>Ufuk</th>
+                    {hdr_model_cells}
+                    <th>Ort. Tahmin</th>
+                    <th>Ort. Δ%</th>
+                  </tr></thead><tbody>
+                """
+                for step_i, (fd, step_lbl) in enumerate(
+                    [(fut_dates[i], milestones.get(i, "")) for i in range(len(fut_dates)) if i in milestones]
+                ):
+                    step_idx = list(milestones.keys())[list(milestones.values()).index(step_lbl)] if step_lbl in milestones.values() else step_i
+                    model_vals = []
+                    cells = ""
+                    for key in valid_keys:
+                        fp = rg_res[key].get("future_preds", [])
+                        if step_idx < len(fp):
+                            val = fp[step_idx]
+                            model_vals.append(val)
+                            delta = (val - last_close) / last_close * 100 if last_close else 0
+                            col = "#34d399" if delta >= 0 else "#f87171"
+                            cells += f"<td style='color:{col}'>{val:.4f} <span style='font-size:10px'>({delta:+.2f}%)</span></td>"
+                        else:
+                            cells += "<td style='color:var(--muted)'>—</td>"
+
+                    if model_vals:
+                        avg_val = sum(model_vals) / len(model_vals)
+                        avg_d   = (avg_val - last_close) / last_close * 100 if last_close else 0
+                        avg_col = "#34d399" if avg_d >= 0 else "#f87171"
+                        avg_cell  = f"<td style='color:{avg_col};font-weight:700'>{avg_val:.4f}</td>"
+                        avg_dcell = f"<td style='color:{avg_col};font-weight:700'>{avg_d:+.2f}%</td>"
+                    else:
+                        avg_cell = avg_dcell = "<td>—</td>"
+
+                    bg = "background:var(--card2)" if step_i % 2 == 0 else ""
+                    rows_html += f"""
+                    <tr style='{bg}'>
+                      <td style='font-family:var(--mono)'>{str(fd)[:10]}</td>
+                      <td><span style='background:rgba(192,57,43,0.12);color:#e87060;border:1px solid rgba(192,57,43,0.25);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700'>{step_lbl}</span></td>
+                      {cells}{avg_cell}{avg_dcell}
+                    </tr>"""
+
+                rows_html += "</tbody></table></div>"
+                st.markdown(rows_html, unsafe_allow_html=True)
+
+        # ── Model Açıklamaları ─────────────────────────────────────────────────
+        with st.expander("ℹ️ Model ve Özellik Açıklamaları"):
+            st.markdown("""
+| Model | Avantajı | Dezavantajı |
+|---|---|---|
+| **Doğrusal Regresyon** | Hızlı, yorumlanabilir | Yalnızca doğrusal ilişkileri yakalar |
+| **Polinom (2/3)** | Eğrili trendleri öğrenir | Aşırı uyum (overfitting) riski taşır |
+| **Ridge** | Regularize, gürültüye dayanıklı | Hiperparametre gerektirir |
+| **SVR** | Küçük veri setlerinde güçlü | Büyük veri setinde yavaş |
+| **Random Forest** | Non-linear, sağlam ensemble | Yorumlanması zor, bellek yoğun |
+
+**Kullanılan özellikler:**
+- Geçmiş kapanış fiyatları (lag: 1, 2, 3, 5, 10)
+- Fiyat getirileri (1 günlük, 5 günlük)
+- RSI, MACD, EMA20, EMA50, ATR%, Stochastic K, CMF, OBV, Hacim Oranı
+- Cyclical zaman encoding (haftanın günü, ay)
+
+> ⚠️ Bu tahminler istatistiksel modellerle üretilmiş olup yatırım tavsiyesi değildir.
+            """)
+
+    elif not rg_res:
+        st.markdown("""
+        <div class="onboard-card">
+          <span class="icon">📉</span>
+          <h4>Regresyon Tahmini Nasıl Çalışır?</h4>
+          <p>Sol taraftan sembol ve eğitim dönemini seçin, kullanmak istediğiniz modelleri işaretleyin ve <b>Modeli Eğit</b> butonuna tıklayın.<br>
+          Modeller teknik indikatörler ve geçmiş fiyatları kullanarak eğitilir; ardından ileriye dönük projeksiyon üretilir.<br>
+          Sonuçlar grafik ve tablo olarak gösterilir. <b>Groq API gerektirmez.</b></p>
+        </div>
+        """, unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # FOOTER
