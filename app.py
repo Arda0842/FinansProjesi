@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from groq import Groq
 from datetime import datetime
-import smtplib, hashlib, json, re, gspread
+import smtplib, hashlib, json, re, gspread, uuid, random, string
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from google.oauth2.service_account import Credentials
@@ -27,110 +27,6 @@ st.set_page_config(
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
-
-/* ─── SERTİFİKA KARTLARI ─── */
-.cert-card {
-  background: linear-gradient(145deg, var(--card) 0%, var(--card2) 100%);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 22px 20px;
-  transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
-  position: relative;
-  overflow: hidden;
-  cursor: pointer;
-  height: 100%;
-}
-.cert-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, var(--cert-color, var(--accent)), transparent);
-  opacity: 0.8;
-}
-.cert-card:hover {
-  border-color: var(--border2);
-  transform: translateY(-3px);
-  box-shadow: 0 12px 32px rgba(0,0,0,0.5);
-}
-.cert-badge {
-  font-size: 32px;
-  margin-bottom: 12px;
-  display: block;
-}
-.cert-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text);
-  margin-bottom: 4px;
-  line-height: 1.4;
-}
-.cert-issuer {
-  font-size: 11px;
-  color: var(--muted);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 8px;
-}
-.cert-date {
-  font-size: 11px;
-  font-family: var(--mono);
-  color: var(--muted);
-  margin-bottom: 10px;
-}
-.cert-tag {
-  display: inline-block;
-  background: rgba(192,57,43,0.12);
-  color: #e87060;
-  border: 1px solid rgba(192,57,43,0.25);
-  border-radius: 4px;
-  padding: 2px 8px;
-  font-size: 10px;
-  font-weight: 600;
-  margin-right: 4px;
-  margin-bottom: 4px;
-}
-.cert-tag.tag-green  { background:rgba(16,185,129,0.12); color:#34d399; border-color:rgba(16,185,129,0.25); }
-.cert-tag.tag-blue   { background:rgba(59,130,246,0.12); color:#60a5fa; border-color:rgba(59,130,246,0.25); }
-.cert-tag.tag-purple { background:rgba(168,85,247,0.12); color:#c084fc; border-color:rgba(168,85,247,0.25); }
-.cert-tag.tag-yellow { background:rgba(245,158,11,0.12); color:#fbbf24; border-color:rgba(245,158,11,0.25); }
-.cert-id {
-  font-family: var(--mono);
-  font-size: 10px;
-  color: var(--border2);
-  margin-top: 10px;
-  border-top: 1px solid var(--border);
-  padding-top: 8px;
-}
-.cert-verify-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  background: rgba(192,57,43,0.1);
-  border: 1px solid rgba(192,57,43,0.3);
-  border-radius: 6px;
-  padding: 5px 12px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--accent2);
-  text-decoration: none;
-  margin-top: 8px;
-  transition: all 0.2s;
-}
-.cert-verify-btn:hover {
-  background: rgba(192,57,43,0.2);
-  border-color: var(--accent2);
-}
-.cert-header-stat {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 14px 18px;
-  text-align: center;
-}
-.cert-header-stat .val { font-family:var(--mono); font-size:22px; font-weight:700; color:var(--text); }
-.cert-header-stat .lbl { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:1.2px; margin-top:3px; }
 
 :root {
   --bg:        #060a12;
@@ -386,6 +282,21 @@ hr { border:none; border-top:1px solid var(--border); margin:14px 0; }
   background:linear-gradient(90deg,var(--accent),var(--blue),var(--green));
 }
 
+/* ─── WALLET CARD ─── */
+.wallet-card {
+  background:linear-gradient(135deg,#0f1929 0%,#111e32 100%);
+  border:1px solid var(--border2); border-radius:var(--radius-lg);
+  padding:20px 22px; margin-top:16px; position:relative; overflow:hidden;
+}
+.wallet-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:3px;
+  background:linear-gradient(90deg,var(--accent),var(--blue));
+}
+.wallet-id {
+  font-family:var(--mono); font-size:12px; color:var(--text2);
+  letter-spacing:1px; word-break:break-all;
+}
+
 /* ─── REGRESYON KARTI ─── */
 .reg-model-card {
   background:var(--card); border:1px solid var(--border);
@@ -408,6 +319,22 @@ hr { border:none; border-top:1px solid var(--border); margin:14px 0; }
 .reg-future-table tr:hover td { background:var(--card2); }
 </style>
 """, unsafe_allow_html=True)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# YARDIMCI FONKSİYONLAR
+# ══════════════════════════════════════════════════════════════════════════════
+
+def generate_wallet_id(username: str) -> str:
+    """Kullanıcıya özgü, tekrarlanamaz cüzdan ID üretir."""
+    namespace = uuid.UUID("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
+    uid = uuid.uuid5(namespace, username.lower().strip())
+    # ARD-XXXX-XXXX-XXXX formatı
+    h = uid.hex.upper()
+    return f"ARD-{h[0:4]}-{h[4:8]}-{h[8:12]}-{h[12:16]}"
+
+def generate_reset_code() -> str:
+    """6 haneli sayısal şifre sıfırlama kodu üretir."""
+    return "".join(random.choices(string.digits, k=6))
 
 # ══════════════════════════════════════════════════════════════════════════════
 # VERİTABANI (Google Sheets)
@@ -440,25 +367,160 @@ def _load_users():
 
 def _hash(pw): return hashlib.sha256(pw.encode()).hexdigest()
 
-def register_user(username, email, password):
+MESLEKLER = [
+    "Yazılım Geliştirici", "Öğrenci", "Mühendis", "Doktor / Sağlık",
+    "Avukat", "Muhasebeci / Mali Müşavir", "Öğretmen / Akademisyen",
+    "Yönetici / Direktör", "Girişimci", "Serbest Meslek",
+    "Finans / Bankacılık", "Pazarlama / Satış", "Diğer"
+]
+
+PORTFOY_BUYUKLUKLERI = [
+    "0 – 10.000 ₺", "10.000 – 50.000 ₺", "50.000 – 250.000 ₺",
+    "250.000 – 1.000.000 ₺", "1.000.000 ₺ üzeri"
+]
+
+def register_user(username, email, password, age, meslek, portfoy_buyuklugu):
     u = username.strip().lower()
     if len(u) < 3: return False, "Kullanıcı adı en az 3 karakter olmalı."
     if not re.match(r"[^@]+@[^@]+\.[^@]+", email): return False, "Geçerli bir e-posta girin."
     if len(password) < 6: return False, "Şifre en az 6 karakter olmalı."
+    try:
+        age_int = int(age)
+        if age_int < 18 or age_int > 100:
+            return False, "Yaş 18-100 arasında olmalıdır."
+    except:
+        return False, "Geçerli bir yaş girin."
     db = _load_users()
     if u in db: return False, "Bu kullanıcı adı zaten alınmış."
-    if any(v.get("email","").lower()==email.lower() for v in db.values()): return False, "Bu e-posta zaten kayıtlı."
+    if any(v.get("email","").lower()==email.lower() for v in db.values()):
+        return False, "Bu e-posta zaten kayıtlı."
     sheet = _get_sheet()
     if not sheet: return False, "Veritabanına bağlanılamadı."
-    sheet.append_row([u, email, _hash(password), datetime.now().strftime("%Y-%m-%d %H:%M")])
-    return True, "Hesap oluşturuldu!"
+    wallet_id = generate_wallet_id(u)
+    sheet.append_row([
+        u, email, _hash(password),
+        datetime.now().strftime("%Y-%m-%d %H:%M"),
+        wallet_id, str(age_int), meslek, portfoy_buyuklugu,
+        ""   # reset_code sütunu (boş başlar)
+    ])
+    return True, "Hesap oluşturuldu!", wallet_id
 
 def verify_login(username, password):
     u  = username.strip().lower()
     db = _load_users()
-    if u not in db: return False, "Kullanıcı bulunamadı."
-    if db[u]["password"] != _hash(password): return False, "Şifre hatalı."
-    return True, db[u].get("email","")
+    if u not in db: return False, "Kullanıcı bulunamadı.", ""
+    if db[u]["password"] != _hash(password): return False, "Şifre hatalı.", ""
+    wallet = db[u].get("wallet_id", generate_wallet_id(u))
+    return True, db[u].get("email",""), wallet
+
+def get_user_by_email(email: str):
+    """E-posta ile kullanıcı kaydını döndür."""
+    db = _load_users()
+    for uname, rec in db.items():
+        if rec.get("email","").lower() == email.lower():
+            return uname, rec
+    return None, None
+
+def save_reset_code(username: str, code: str):
+    """Kullanıcı satırına reset_code yaz."""
+    sheet = _get_sheet()
+    if not sheet: return False
+    try:
+        records = sheet.get_all_records()
+        headers = sheet.row_values(1)
+        # reset_code sütun indeksini bul ya da oluştur
+        if "reset_code" not in headers:
+            col_idx = len(headers) + 1
+            sheet.update_cell(1, col_idx, "reset_code")
+        else:
+            col_idx = headers.index("reset_code") + 1
+        for i, r in enumerate(records):
+            if r.get("username") == username:
+                sheet.update_cell(i + 2, col_idx, code)
+                return True
+        return False
+    except: return False
+
+def verify_reset_code(username: str, code: str) -> bool:
+    """Sheets'teki reset_code ile girilen kodu karşılaştır."""
+    db = _load_users()
+    rec = db.get(username)
+    if not rec: return False
+    return str(rec.get("reset_code","")).strip() == code.strip()
+
+def update_password(username: str, new_password: str):
+    """Şifreyi güncelle ve reset_code'u temizle."""
+    sheet = _get_sheet()
+    if not sheet: return False
+    try:
+        records = sheet.get_all_records()
+        headers = sheet.row_values(1)
+        pw_col     = headers.index("password")     + 1 if "password"     in headers else None
+        reset_col  = headers.index("reset_code")   + 1 if "reset_code"   in headers else None
+        for i, r in enumerate(records):
+            if r.get("username") == username:
+                if pw_col:
+                    sheet.update_cell(i + 2, pw_col, _hash(new_password))
+                if reset_col:
+                    sheet.update_cell(i + 2, reset_col, "")
+                return True
+        return False
+    except: return False
+
+def send_reset_email(to: str, username: str, code: str) -> tuple:
+    """Şifre sıfırlama kodunu e-posta ile gönder."""
+    try:
+        sender = st.secrets["EMAIL_SENDER"]
+        pwd    = st.secrets["EMAIL_PASSWORD"]
+    except:
+        return False, "E-posta ayarları eksik."
+    html = f"""
+    <div style="font-family:sans-serif;max-width:480px;margin:0 auto;
+      background:#070b14;border:1px solid #1a2840;border-radius:14px;overflow:hidden">
+      <div style="background:#0d1420;padding:20px;text-align:center">
+        <b style="font-size:22px">
+          <span style="color:#e02020">ARD</span>
+          <span style="color:#e8edf5"> FİNANS</span>
+        </b>
+        <div style="color:#4a5a78;font-size:10px;letter-spacing:2px;margin-top:3px">
+          ŞİFRE SIFIRLAMA
+        </div>
+      </div>
+      <div style="padding:28px 24px">
+        <p style="color:#8899b0;font-size:14px;margin:0 0 16px">
+          Merhaba <b style="color:#e8edf5">{username}</b>,
+        </p>
+        <p style="color:#8899b0;font-size:13px;margin:0 0 20px">
+          Şifre sıfırlama talebiniz alındı. Aşağıdaki kodu kullanın:
+        </p>
+        <div style="background:#111c2e;border:1px solid #1a2840;border-radius:10px;
+          padding:20px;text-align:center;margin-bottom:20px">
+          <div style="font-family:monospace;font-size:36px;font-weight:800;
+            letter-spacing:10px;color:#e02020;text-shadow:0 0 20px rgba(224,32,32,0.4)">
+            {code}
+          </div>
+          <div style="color:#4a5a78;font-size:11px;margin-top:8px">
+            Bu kod 15 dakika geçerlidir.
+          </div>
+        </div>
+        <p style="color:#2a3a52;font-size:11px">
+          Bu isteği siz yapmadıysanız bu e-postayı görmezden gelin.<br>
+          © 2026 ARD Finans
+        </p>
+      </div>
+    </div>"""
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = "🔐 ARD Finans — Şifre Sıfırlama Kodu"
+        msg["From"]    = sender
+        msg["To"]      = to
+        msg.attach(MIMEText(html, "html", "utf-8"))
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as s:
+            s.login(sender, pwd)
+            s.sendmail(sender, to, msg.as_string())
+        return True, "Gönderildi"
+    except Exception as e:
+        return False, str(e)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # PORTFÖY VERİTABANI (Google Sheets — 2. sayfa)
@@ -574,9 +636,14 @@ def load_portfolio_history(username):
 # ══════════════════════════════════════════════════════════════════════════════
 # SESSION STATE
 # ══════════════════════════════════════════════════════════════════════════════
-DEFAULTS = dict(portfolio=[], alerts=[], groq_key="", logged_in=False,
-                username="", auth_page="login", auth_msg="", auth_ok=False,
-                splash_done=False, pf_loaded=False, ai_predictions={})
+DEFAULTS = dict(
+    portfolio=[], alerts=[], groq_key="", logged_in=False,
+    username="", wallet_id="", user_email="",
+    auth_page="login",   # "login" | "register" | "forgot" | "reset_verify"
+    auth_msg="", auth_ok=False,
+    splash_done=False, pf_loaded=False, ai_predictions={},
+    reset_username="", reset_code_sent=False,
+)
 for k, v in DEFAULTS.items():
     if k not in st.session_state: st.session_state[k] = v
 
@@ -650,18 +717,19 @@ if not st.session_state.logged_in and not st.session_state.splash_done:
     st.rerun()
 
 # ══════════════════════════════════════════════════════════════════════════════
-# GİRİŞ / KAYIT EKRANI
+# GİRİŞ / KAYIT / ŞİFRE SIFIRLAMA EKRANI
 # ══════════════════════════════════════════════════════════════════════════════
 if not st.session_state.logged_in:
     st.markdown("""
     <style>
     section[data-testid="stSidebar"]{display:none!important}
-    .block-container{max-width:440px!important;padding-top:48px!important}
+    .block-container{max-width:480px!important;padding-top:48px!important}
     .stTextInput label{color:var(--muted)!important;font-size:11px!important;
       text-transform:uppercase;letter-spacing:1px}
     </style>
     """, unsafe_allow_html=True)
 
+    # Logo
     st.markdown("""
     <div style="text-align:center;margin-bottom:28px">
       <div style="font-size:36px;font-weight:800;letter-spacing:-1px;margin-bottom:6px">
@@ -677,50 +745,176 @@ if not st.session_state.logged_in:
     </div>
     """, unsafe_allow_html=True)
 
-    c1, c2 = st.columns(2)
-    with c1:
+    # Sekme butonları
+    tab_btns = st.columns(3)
+    with tab_btns[0]:
         if st.button("Giriş Yap", use_container_width=True,
-                     type="primary" if st.session_state.auth_page=="login" else "secondary"):
-            st.session_state.auth_page="login"; st.session_state.auth_msg=""; st.rerun()
-    with c2:
+                     type="primary" if st.session_state.auth_page == "login" else "secondary"):
+            st.session_state.auth_page = "login"; st.session_state.auth_msg = ""; st.rerun()
+    with tab_btns[1]:
         if st.button("Hesap Oluştur", use_container_width=True,
-                     type="primary" if st.session_state.auth_page=="register" else "secondary"):
-            st.session_state.auth_page="register"; st.session_state.auth_msg=""; st.rerun()
+                     type="primary" if st.session_state.auth_page == "register" else "secondary"):
+            st.session_state.auth_page = "register"; st.session_state.auth_msg = ""; st.rerun()
+    with tab_btns[2]:
+        if st.button("Şifremi Unuttum", use_container_width=True,
+                     type="primary" if st.session_state.auth_page in ("forgot","reset_verify") else "secondary"):
+            st.session_state.auth_page = "forgot"; st.session_state.auth_msg = ""; st.rerun()
 
     st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 
+    # ── GİRİŞ ────────────────────────────────────────────────────────────────
     if st.session_state.auth_page == "login":
         u = st.text_input("Kullanıcı Adı", placeholder="kullanıcı adınız", key="l_u")
         p = st.text_input("Şifre", type="password", placeholder="••••••••", key="l_p")
         st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
         if st.button("Giriş Yap →", use_container_width=True, type="primary", key="do_login"):
-            ok, msg = verify_login(u, p)
+            ok, msg, wid = verify_login(u, p)
             if ok:
-                st.session_state.logged_in = True
-                st.session_state.username  = u.strip().lower()
-                st.session_state.auth_msg  = ""
+                st.session_state.logged_in  = True
+                st.session_state.username   = u.strip().lower()
+                st.session_state.wallet_id  = wid
+                st.session_state.user_email = msg   # verify_login'de msg=email
+                st.session_state.auth_msg   = ""
                 st.rerun()
             else:
                 st.session_state.auth_msg = msg; st.rerun()
         if st.session_state.auth_msg:
             st.error(f"❌ {st.session_state.auth_msg}")
-    else:
+
+    # ── KAYIT ─────────────────────────────────────────────────────────────────
+    elif st.session_state.auth_page == "register":
         u  = st.text_input("Kullanıcı Adı", placeholder="en az 3 karakter", key="r_u")
         em = st.text_input("E-posta", placeholder="ornek@mail.com", key="r_e")
-        p1 = st.text_input("Şifre", type="password", placeholder="en az 6 karakter", key="r_p1")
-        p2 = st.text_input("Şifre (tekrar)", type="password", placeholder="••••••••", key="r_p2")
+        c1r, c2r = st.columns(2)
+        with c1r: p1 = st.text_input("Şifre", type="password", placeholder="en az 6 karakter", key="r_p1")
+        with c2r: p2 = st.text_input("Şifre (tekrar)", type="password", placeholder="••••••••", key="r_p2")
+
         st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
+        c3r, c4r = st.columns([1, 2])
+        with c3r: age_inp = st.number_input("Yaş", min_value=18, max_value=100, value=25, step=1, key="r_age")
+        with c4r: meslek_inp = st.selectbox("Meslek", MESLEKLER, key="r_meslek")
+        portfoy_inp = st.selectbox("Portföy Büyüklüğü", PORTFOY_BUYUKLUKLERI, key="r_portfoy")
+
+        st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
         if st.button("Hesap Oluştur →", use_container_width=True, type="primary", key="do_reg"):
             if p1 != p2:
-                st.session_state.auth_msg="Şifreler eşleşmiyor."; st.session_state.auth_ok=False; st.rerun()
+                st.session_state.auth_msg = "Şifreler eşleşmiyor."
+                st.session_state.auth_ok  = False
+                st.rerun()
             else:
-                ok, msg = register_user(u, em, p1)
-                st.session_state.auth_msg=msg; st.session_state.auth_ok=ok; st.rerun()
+                result = register_user(u, em, p1, age_inp, meslek_inp, portfoy_inp)
+                if result[0]:
+                    _, msg, new_wallet = result
+                    st.session_state.auth_msg       = msg
+                    st.session_state.auth_ok        = True
+                    st.session_state.new_wallet_id  = new_wallet
+                else:
+                    _, msg = result[0], result[1]
+                    st.session_state.auth_msg = msg
+                    st.session_state.auth_ok  = False
+                st.rerun()
+
         if st.session_state.auth_msg:
             if st.session_state.auth_ok:
                 st.success(f"✅ {st.session_state.auth_msg} Şimdi giriş yapabilirsiniz.")
+                wid_show = st.session_state.get("new_wallet_id", "")
+                if wid_show:
+                    st.markdown(f"""
+                    <div class="wallet-card">
+                      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;
+                        letter-spacing:1.5px;margin-bottom:8px">🔑 Cüzdan ID'niz (kaydedin!)</div>
+                      <div class="wallet-id">{wid_show}</div>
+                      <div style="font-size:10px;color:#2a3a52;margin-top:8px">
+                        Bu ID size özeldir ve değiştirilemez.
+                      </div>
+                    </div>
+                    """, unsafe_allow_html=True)
             else:
                 st.error(f"❌ {st.session_state.auth_msg}")
+
+    # ── ŞİFREMİ UNUTTUM — E-POSTA GİRİŞİ ─────────────────────────────────────
+    elif st.session_state.auth_page == "forgot":
+        st.markdown("""
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);
+          padding:18px 20px;margin-bottom:16px">
+          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px">🔐 Şifre Sıfırlama</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.7">
+            Kayıtlı e-posta adresinizi girin. Size 6 haneli bir doğrulama kodu göndereceğiz.
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
+        forgot_email = st.text_input("Kayıtlı E-posta Adresiniz", placeholder="ornek@mail.com", key="fg_email")
+        st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
+        if st.button("Kod Gönder →", use_container_width=True, type="primary", key="do_forgot"):
+            uname, rec = get_user_by_email(forgot_email.strip())
+            if not rec:
+                st.session_state.auth_msg = "Bu e-posta adresiyle kayıtlı hesap bulunamadı."
+                st.rerun()
+            else:
+                code = generate_reset_code()
+                saved = save_reset_code(uname, code)
+                if not saved:
+                    st.session_state.auth_msg = "Kod kaydedilemedi. Lütfen tekrar deneyin."
+                    st.rerun()
+                ok, send_msg = send_reset_email(forgot_email.strip(), uname, code)
+                if ok:
+                    st.session_state.reset_username   = uname
+                    st.session_state.reset_code_sent  = True
+                    st.session_state.auth_page        = "reset_verify"
+                    st.session_state.auth_msg         = ""
+                    st.rerun()
+                else:
+                    st.session_state.auth_msg = f"E-posta gönderilemedi: {send_msg}"
+                    st.rerun()
+        if st.session_state.auth_msg:
+            st.error(f"❌ {st.session_state.auth_msg}")
+
+    # ── ŞİFREMİ UNUTTUM — KOD + YENİ ŞİFRE ───────────────────────────────────
+    elif st.session_state.auth_page == "reset_verify":
+        st.markdown(f"""
+        <div style="background:var(--card);border:1px solid #22c55e44;border-radius:var(--radius-lg);
+          padding:16px 18px;margin-bottom:16px">
+          <div style="font-size:12px;color:#34d399;margin-bottom:4px">✅ Kod gönderildi</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.6">
+            <b style="color:var(--text2)">{st.session_state.get('reset_username','')}</b>
+            hesabınıza bağlı e-postaya 6 haneli kod gönderildi.
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
+        reset_code_inp  = st.text_input("Doğrulama Kodu (6 hane)", placeholder="000000", max_chars=6, key="rv_code")
+        new_pw1 = st.text_input("Yeni Şifre", type="password", placeholder="en az 6 karakter", key="rv_pw1")
+        new_pw2 = st.text_input("Yeni Şifre (tekrar)", type="password", placeholder="••••••••", key="rv_pw2")
+        st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
+        if st.button("Şifreyi Güncelle →", use_container_width=True, type="primary", key="do_reset"):
+            uname = st.session_state.get("reset_username","")
+            if new_pw1 != new_pw2:
+                st.session_state.auth_msg = "Şifreler eşleşmiyor."
+                st.rerun()
+            elif len(new_pw1) < 6:
+                st.session_state.auth_msg = "Şifre en az 6 karakter olmalı."
+                st.rerun()
+            elif not verify_reset_code(uname, reset_code_inp.strip()):
+                st.session_state.auth_msg = "Doğrulama kodu hatalı veya süresi dolmuş."
+                st.rerun()
+            else:
+                ok = update_password(uname, new_pw1)
+                if ok:
+                    st.session_state.auth_page        = "login"
+                    st.session_state.auth_msg         = "Şifreniz başarıyla güncellendi! Giriş yapabilirsiniz."
+                    st.session_state.auth_ok          = True
+                    st.session_state.reset_code_sent  = False
+                    st.session_state.reset_username   = ""
+                    st.rerun()
+                else:
+                    st.session_state.auth_msg = "Şifre güncellenemedi. Tekrar deneyin."
+                    st.rerun()
+        if st.session_state.auth_msg:
+            if st.session_state.get("auth_ok") and st.session_state.auth_page == "login":
+                st.success(f"✅ {st.session_state.auth_msg}")
+            else:
+                st.error(f"❌ {st.session_state.auth_msg}")
+        if st.button("← Geri Dön", type="secondary", key="rv_back"):
+            st.session_state.auth_page = "forgot"; st.session_state.auth_msg = ""; st.rerun()
 
     st.markdown("""
     <div style="text-align:center;color:#2a3a52;font-size:11px;margin-top:28px">
@@ -734,6 +928,9 @@ if st.session_state.logged_in and not st.session_state.pf_loaded:
     with st.spinner("Portföy yükleniyor..."):
         st.session_state.portfolio = load_portfolio(st.session_state.username)
         st.session_state.pf_loaded = True
+        # Wallet ID yoksa üret (eski kullanıcılar için)
+        if not st.session_state.wallet_id:
+            st.session_state.wallet_id = generate_wallet_id(st.session_state.username)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # VERİ FONKSİYONLARI
@@ -1040,7 +1237,6 @@ AI_MODELS = [
 ]
 
 def ai_price_forecast(ticker, df, info, key, model_id):
-    """Belirli bir model ile fiyat tahmini üretir."""
     client = Groq(api_key=key)
     lc = float(df["Close"].iloc[-1])
     rsi = float(df["RSI"].iloc[-1]) if "RSI" in df.columns else 50
@@ -1070,7 +1266,6 @@ Sadece aşağıdaki JSON formatını döndür, başka hiçbir şey yazma:
         )
         import json as _json
         raw = r.choices[0].message.content.strip()
-        # JSON bloğunu bul
         import re as _re
         m = _re.search(r'\{.*\}', raw, _re.DOTALL)
         if m:
@@ -1093,37 +1288,24 @@ REG_MODELS_DEF = [
 ]
 
 def _build_features(df: pd.DataFrame) -> pd.DataFrame:
-    """Teknik göstergelerden özellik matrisi oluştur."""
     df = df.copy()
     c = df["Close"].squeeze().astype(float)
-
-    # Lag fiyatlar
     for lag in [1, 2, 3, 5, 10]:
         df[f"lag_{lag}"] = c.shift(lag)
-
-    # Getiri
     df["ret_1"] = c.pct_change(1)
     df["ret_5"] = c.pct_change(5)
-
-    # Teknik indikatörler (varsa)
     for col in ["RSI", "MACD", "EMA20", "EMA50", "ATR%", "StochK", "CMF", "OBV", "VolR"]:
         if col in df.columns:
             df[f"feat_{col}"] = df[col].squeeze().astype(float)
-
-    # Zaman özellikleri
     if hasattr(df.index, "dayofweek"):
         df["dow_sin"] = np.sin(2 * np.pi * df.index.dayofweek / 5)
         df["dow_cos"] = np.cos(2 * np.pi * df.index.dayofweek / 5)
         df["month_sin"] = np.sin(2 * np.pi * df.index.month / 12)
         df["month_cos"] = np.cos(2 * np.pi * df.index.month / 12)
-
-    # Hedef sütun
-    df["target"] = c.shift(-1)          # yarınki kapanış
+    df["target"] = c.shift(-1)
     return df.dropna()
 
-
 def _make_sklearn_model(key: str):
-    """Scikit-learn model nesnesi döndür."""
     from sklearn.linear_model import LinearRegression, Ridge
     from sklearn.svm import SVR
     from sklearn.ensemble import RandomForestRegressor
@@ -1145,9 +1327,7 @@ def _make_sklearn_model(key: str):
         return Pipeline([("reg", RandomForestRegressor(n_estimators=200, max_depth=8, random_state=42, n_jobs=-1))])
     raise ValueError(f"Bilinmeyen model: {key}")
 
-
 def _calc_metrics(y_true, y_pred) -> dict:
-    """R², RMSE, MAPE hesapla."""
     y_true = np.array(y_true, dtype=float)
     y_pred = np.array(y_pred, dtype=float)
     ss_res = np.sum((y_true - y_pred) ** 2)
@@ -1157,10 +1337,8 @@ def _calc_metrics(y_true, y_pred) -> dict:
     mape = np.mean(np.abs((y_true - y_pred) / (y_true + 1e-9))) * 100
     return {"r2": r2, "rmse": rmse, "mape": mape}
 
-
 @st.cache_data(ttl=300, show_spinner=False)
 def run_regression(ticker: str, period: str, model_keys: tuple) -> dict:
-    """Seçilen modelleri eğit; metrik ve gelecek tahminleri döndür."""
     df_raw = get_data(ticker, period, "1d")
     if df_raw.empty:
         return {}
@@ -1184,13 +1362,8 @@ def run_regression(ticker: str, period: str, model_keys: tuple) -> dict:
             mdl.fit(X_train, y_train)
             y_pred_test = mdl.predict(X_test)
             metrics = _calc_metrics(y_test, y_pred_test)
-
-            # Tüm veri üzerinde in-sample tahmin (grafik için)
             y_pred_all = mdl.predict(X)
-
-            # İleriye projeksiyon (yinelemeli)
             future_preds = _iterative_forecast(mdl, feat_df, feat_cols, steps=22)
-
             results[key] = {
                 "metrics":      metrics,
                 "dates":        list(dates),
@@ -1207,15 +1380,12 @@ def run_regression(ticker: str, period: str, model_keys: tuple) -> dict:
     results["_last_date"]  = df_raw.index[-1]
     return results
 
-
 def _iterative_forecast(model, feat_df: pd.DataFrame, feat_cols: list, steps: int = 22) -> list:
-    """Son bilinen özellik vektörünü güncelleyerek adım adım tahmin üret."""
     last_row = feat_df[feat_cols].iloc[-1].values.copy().astype(float)
     preds = []
     for _ in range(steps):
         p = float(model.predict(last_row.reshape(1, -1))[0])
         preds.append(p)
-        # lag_1 ← tahmin edilen fiyat, diğer lagları kaydır
         lag_cols = [c for c in feat_cols if c.startswith("lag_")]
         lag_nums = sorted([int(c.split("_")[1]) for c in lag_cols])
         lag_map  = {f"lag_{n}": i for i, n in enumerate(lag_nums)}
@@ -1230,12 +1400,8 @@ def _iterative_forecast(model, feat_df: pd.DataFrame, feat_cols: list, steps: in
             last_row = new_row
     return preds
 
-
 def regression_chart(results: dict, model_keys: list, show_future: bool = True) -> go.Figure:
-    """Gerçek fiyat + model tahmin/projeksiyon grafiği."""
     model_info = {m["key"]: m for m in REG_MODELS_DEF}
-
-    # Herhangi bir modelden ortak zaman serisi al
     ref_key = next((k for k in model_keys if k in results and "dates" in results[k]), None)
     if ref_key is None:
         return go.Figure()
@@ -1247,21 +1413,16 @@ def regression_chart(results: dict, model_keys: list, show_future: bool = True) 
     last_date = results.get("_last_date", dates[-1])
 
     fig = go.Figure()
-
-    # Gerçek fiyat — train bölgesi
     fig.add_trace(go.Scatter(
         x=dates[:split_idx], y=actual[:split_idx],
         name="Gerçek (Eğitim)", mode="lines",
         line=dict(color="#4a5a78", width=1.5),
     ))
-    # Gerçek fiyat — test bölgesi
     fig.add_trace(go.Scatter(
         x=dates[split_idx:], y=actual[split_idx:],
         name="Gerçek (Test)", mode="lines",
         line=dict(color="#e2e8f4", width=2),
     ))
-
-    # Dikey bölge ayırıcı
     fig.add_vline(x=dates[split_idx], line_dash="dot", line_color="#1c2d47", line_width=1)
 
     for key in model_keys:
@@ -1269,16 +1430,12 @@ def regression_chart(results: dict, model_keys: list, show_future: bool = True) 
             continue
         r    = results[key]
         info = model_info.get(key, {"name": key, "color": "#ffffff"})
-
-        # Test tahmini çizgisi
         fig.add_trace(go.Scatter(
             x=dates[split_idx:], y=r["pred_all"][split_idx:],
             name=f"{info['name']}",
             mode="lines",
             line=dict(color=info["color"], width=2, dash="dash"),
         ))
-
-        # Gelecek projeksiyon
         if show_future and r.get("future_preds"):
             fut_dates = list(pd.bdate_range(start=last_date, periods=len(r["future_preds"]) + 1)[1:])
             fig.add_trace(go.Scatter(
@@ -1306,7 +1463,7 @@ def regression_chart(results: dict, model_keys: list, show_future: bool = True) 
     return fig
 
 # ══════════════════════════════════════════════════════════════════════════════
-# E-POSTA
+# E-POSTA (Fiyat Alarmı)
 # ══════════════════════════════════════════════════════════════════════════════
 
 def send_email(to, ticker, atype, target, current):
@@ -1348,6 +1505,7 @@ def send_email(to, ticker, atype, target, current):
 # SIDEBAR
 # ══════════════════════════════════════════════════════════════════════════════
 with st.sidebar:
+    wallet_short = st.session_state.wallet_id[:16] + "…" if st.session_state.wallet_id else "—"
     st.markdown(f"""
     <div class="sb-logo">
       <div class="sb-logo-text">
@@ -1366,12 +1524,16 @@ with st.sidebar:
           <span style="width:6px;height:6px;border-radius:50%;background:#10b981;display:inline-block;box-shadow:0 0 5px #10b981"></span>
           Aktif oturum
         </div>
+        <div style="font-size:9px;color:#243552;font-family:monospace;margin-top:3px" title="{st.session_state.wallet_id}">
+          🔑 {wallet_short}
+        </div>
       </div>
     </div>
     """, unsafe_allow_html=True)
 
     if st.button("Oturumu Kapat", use_container_width=True, type="secondary"):
-        st.session_state.logged_in=False; st.session_state.username=""; st.rerun()
+        st.session_state.logged_in=False; st.session_state.username=""
+        st.session_state.wallet_id=""; st.rerun()
 
     st.markdown('<div class="sb-section-title">📈 HİSSE ANALİZİ</div>', unsafe_allow_html=True)
     raw = st.text_input("Sembol", value="AAPL", placeholder="AAPL · THYAO · BTC-USD", label_visibility="visible").upper().strip()
@@ -1421,9 +1583,16 @@ with st.sidebar:
             st.success("✓ Alarm kuruldu")
 
 # ══════════════════════════════════════════════════════════════════════════════
-# ANA İÇERİK
+# ANA İÇERİK  (Sertifikalar sekmesi kaldırıldı → 6 sekme)
 # ══════════════════════════════════════════════════════════════════════════════
-tab1,tab2,tab3,tab4,tab5,tab6,tab7 = st.tabs(["📈 Grafik & Sinyaller","🤖 AI Analiz","🔮 AI Tahmin","💼 Portföy","🔔 Alarmlar","🎓 Sertifikalar","📉 Regresyon"])
+tab1,tab2,tab3,tab4,tab5,tab6 = st.tabs([
+    "📈 Grafik & Sinyaller",
+    "🤖 AI Analiz",
+    "🔮 AI Tahmin",
+    "💼 Portföy",
+    "🔔 Alarmlar",
+    "📉 Regresyon"
+])
 
 # ── TAB 1: GRAFİK ──────────────────────────────────────────────────────────────
 with tab1:
@@ -1578,20 +1747,8 @@ with tab3:
     st.markdown("""
     <div style='margin-bottom:20px'>
       <div style='font-size:22px;font-weight:800;color:#e2e8f4;margin-bottom:6px'>🔮 AI Fiyat Tahmini</div>
-      <div style='color:#4a6080;font-size:13px;line-height:1.6'>4 farklı yapay zeka modeli bağımsız tahmin üretir. Ort a tahminler konsensüs olarak gösterilir.</div>
+      <div style='color:#4a6080;font-size:13px;line-height:1.6'>4 farklı yapay zeka modeli bağımsız tahmin üretir. Ortalama tahminler konsensüs olarak gösterilir.</div>
     </div>
-    <style>
-    .pred-card { background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 16px;transition:all 0.2s;height:100%; }
-    .pred-card:hover { border-color:var(--border2);background:var(--card2);transform:translateY(-2px);box-shadow:var(--shadow); }
-    .pred-model { font-size:12px;font-weight:700;margin-bottom:12px;color:var(--text); }
-    .pred-price { font-family:var(--mono);font-size:17px;font-weight:700; }
-    .pred-label { font-size:9px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);margin-bottom:3px;font-weight:600; }
-    .pred-signal-AL   { background:rgba(16,185,129,0.12);color:#34d399;border:1px solid rgba(16,185,129,0.3);border-radius:6px;padding:3px 12px;font-size:11px;font-weight:700;display:inline-block; }
-    .pred-signal-SAT  { background:rgba(239,68,68,0.12);color:#f87171;border:1px solid rgba(239,68,68,0.3);border-radius:6px;padding:3px 12px;font-size:11px;font-weight:700;display:inline-block; }
-    .pred-signal-NÖTR { background:rgba(100,116,139,0.12);color:#94a3b8;border:1px solid rgba(100,116,139,0.25);border-radius:6px;padding:3px 12px;font-size:11px;font-weight:700;display:inline-block; }
-    .consensus-box { background:linear-gradient(135deg,var(--card) 0%,#111e32 100%);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:24px 28px;margin-bottom:22px;box-shadow:var(--shadow-sm);position:relative;overflow:hidden; }
-    .consensus-box::before { content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--blue),var(--green)); }
-    </style>
     """, unsafe_allow_html=True)
 
     fc1, fc2 = st.columns([3,1])
@@ -1624,7 +1781,6 @@ with tab3:
         lc_fc = pred_data["lc"]
         curr = pred_data["info"].get("currency", "USD")
 
-        # Konsensüs hesapla
         all_1d = []; all_1w = []; all_1m = []; signals_list = []
         for mdl in AI_MODELS:
             p = pred_data["preds"].get(mdl["id"])
@@ -1670,55 +1826,51 @@ with tab3:
             </div>
             """, unsafe_allow_html=True)
 
-            # Tahmin grafiği
             import numpy as np
-            last_date = df_fc.index[-1]
-            future_dates = pd.bdate_range(start=last_date, periods=22)[1:]
-            hist_x = list(df_fc.index[-30:])
-            hist_y = list(df_fc["Close"].iloc[-30:].astype(float))
+            last_date = df_fc.index[-1] if 'df_fc' in dir() and not df_fc.empty else None
+            if last_date is not None:
+                future_dates = pd.bdate_range(start=last_date, periods=22)[1:]
+                hist_x = list(df_fc.index[-30:])
+                hist_y = list(df_fc["Close"].iloc[-30:].astype(float))
 
-            fg = go.Figure()
-            fg.add_trace(go.Scatter(
-                x=hist_x, y=hist_y, name="Geçmiş",
-                line=dict(color="#4a5a78", width=2),
-                mode="lines"
-            ))
-            pal_map = {m["id"]: m for m in AI_MODELS}
-            for mdl in AI_MODELS:
-                p = pred_data["preds"].get(mdl["id"])
-                if not p: continue
-                try:
-                    pts_x = [last_date, future_dates[0], future_dates[4], future_dates[-1]]
-                    pts_y = [lc_fc, float(p["1gun"]), float(p["1hafta"]), float(p["1ay"])]
-                    fg.add_trace(go.Scatter(
-                        x=pts_x, y=pts_y, name=f"{mdl['icon']} {mdl['name']}",
-                        line=dict(color=mdl["color"], width=2, dash="dot"),
-                        mode="lines+markers", marker=dict(size=6, color=mdl["color"])
-                    ))
-                except: pass
-            # Konsensüs çizgisi
-            pts_x_c = [last_date, future_dates[0], future_dates[4], future_dates[-1]]
-            pts_y_c = [lc_fc, c1d, c1w, c1m]
-            fg.add_trace(go.Scatter(
-                x=pts_x_c, y=pts_y_c, name="🎯 Konsensüs",
-                line=dict(color="#ffffff", width=3),
-                mode="lines+markers", marker=dict(size=8, color="#ffffff")
-            ))
-            fg.update_layout(
-                paper_bgcolor="#070b14", plot_bgcolor="#0d1420",
-                font=dict(color="#4a5a78", family="Sora"),
-                height=350, margin=dict(l=8,r=8,t=30,b=8),
-                hovermode="x unified",
-                hoverlabel=dict(bgcolor="#111c2e", bordercolor="#1a2840", font_color="#e8edf5"),
-                legend=dict(bgcolor="#0d1420", bordercolor="#1a2840", borderwidth=1,
-                            font=dict(size=11, color="#8899b0"), orientation="h", y=1.08),
-                xaxis=dict(gridcolor="#0f1926", zerolinecolor="#0f1926",
-                           showspikes=True, spikecolor="#e02020"),
-                yaxis=dict(gridcolor="#0f1926", zerolinecolor="#0f1926")
-            )
-            st.plotly_chart(fg, use_container_width=True)
+                fg = go.Figure()
+                fg.add_trace(go.Scatter(
+                    x=hist_x, y=hist_y, name="Geçmiş",
+                    line=dict(color="#4a5a78", width=2), mode="lines"
+                ))
+                for mdl in AI_MODELS:
+                    p = pred_data["preds"].get(mdl["id"])
+                    if not p: continue
+                    try:
+                        pts_x = [last_date, future_dates[0], future_dates[4], future_dates[-1]]
+                        pts_y = [lc_fc, float(p["1gun"]), float(p["1hafta"]), float(p["1ay"])]
+                        fg.add_trace(go.Scatter(
+                            x=pts_x, y=pts_y, name=f"{mdl['icon']} {mdl['name']}",
+                            line=dict(color=mdl["color"], width=2, dash="dot"),
+                            mode="lines+markers", marker=dict(size=6, color=mdl["color"])
+                        ))
+                    except: pass
+                pts_x_c = [last_date, future_dates[0], future_dates[4], future_dates[-1]]
+                pts_y_c = [lc_fc, c1d, c1w, c1m]
+                fg.add_trace(go.Scatter(
+                    x=pts_x_c, y=pts_y_c, name="🎯 Konsensüs",
+                    line=dict(color="#ffffff", width=3),
+                    mode="lines+markers", marker=dict(size=8, color="#ffffff")
+                ))
+                fg.update_layout(
+                    paper_bgcolor="#070b14", plot_bgcolor="#0d1420",
+                    font=dict(color="#4a5a78", family="Inter"),
+                    height=350, margin=dict(l=8,r=8,t=30,b=8),
+                    hovermode="x unified",
+                    hoverlabel=dict(bgcolor="#111c2e", bordercolor="#1a2840", font_color="#e8edf5"),
+                    legend=dict(bgcolor="#0d1420", bordercolor="#1a2840", borderwidth=1,
+                                font=dict(size=11, color="#8899b0"), orientation="h", y=1.08),
+                    xaxis=dict(gridcolor="#0f1926", zerolinecolor="#0f1926",
+                               showspikes=True, spikecolor="#e02020"),
+                    yaxis=dict(gridcolor="#0f1926", zerolinecolor="#0f1926")
+                )
+                st.plotly_chart(fg, use_container_width=True)
 
-        # Model kartları
         st.markdown("### Model Tahminleri")
         cols_fc = st.columns(len(AI_MODELS))
         for i, mdl in enumerate(AI_MODELS):
@@ -1801,8 +1953,6 @@ with tab4:
         if rows:
             tpl=tv-tc
             tplp=tpl/tc*100 if tc>0 else 0
-
-            # Günlük snapshot kaydet
             save_portfolio_snapshot(st.session_state.username, tv, tc)
 
             m1,m2,m3,m4=st.columns(4)
@@ -1812,7 +1962,6 @@ with tab4:
             m4.metric("Pozisyon",f"{len(rows)}")
             st.markdown("---")
 
-            # Hisse tablosu
             hcols=st.columns([0.5,1.5,0.6,0.9,0.9,0.9,1.1,1.1,1.1,0.4])
             for hc,lbl in zip(hcols,["Tür","Varlık","Adet","Alış","Güncel","Değişim","Değer","K/Z","K/Z %",""]):
                 hc.markdown(f"<div style='color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1px;padding-bottom:6px'>{lbl}</div>",unsafe_allow_html=True)
@@ -1820,7 +1969,7 @@ with tab4:
             for i,row in enumerate(rows):
                 cc="#22c55e" if row["chg"]>=0 else "#ef4444"
                 pc2="#22c55e" if row["pl"]>=0 else "#ef4444"
-                atype = row.get('type','📈 Hisse').split()[0]  # sadece emoji
+                atype = row.get('type','📈 Hisse').split()[0]
                 cols=st.columns([0.5,1.5,0.6,0.9,0.9,0.9,1.1,1.1,1.1,0.4])
                 vals=[
                     f"<span style='font-size:16px'>{atype}</span>",
@@ -1843,10 +1992,7 @@ with tab4:
 
             st.markdown("---")
 
-            # ── PERFORMANS GRAFİĞİ ────────────────────────────────────────────
             hist_df = load_portfolio_history(st.session_state.username)
-
-            # Bugünkü anlık değeri son nokta olarak ekle (Sheets'e kaydetmeden, sadece görsel)
             today_ts = pd.Timestamp(datetime.now().date())
             if hist_df.empty or hist_df["date"].max() < today_ts:
                 today_row = pd.DataFrame([{
@@ -1868,8 +2014,7 @@ with tab4:
                     name="Portföy Değeri",
                     line=dict(color="#3b82f6", width=2),
                     fill="tozeroy", fillcolor="rgba(59,130,246,0.08)",
-                    mode="lines+markers",
-                    marker=dict(size=5, color="#3b82f6"),
+                    mode="lines+markers", marker=dict(size=5, color="#3b82f6"),
                     hovertemplate="<b>%{x|%d %b %Y}</b><br>Değer: $%{y:,.2f}<extra></extra>"
                 ))
                 fg.add_trace(go.Scatter(
@@ -1881,7 +2026,7 @@ with tab4:
                 ))
                 fg.update_layout(
                     paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                    font=dict(color="#8899b0", family="Sora"),
+                    font=dict(color="#8899b0", family="Inter"),
                     height=300, margin=dict(l=8,r=8,t=20,b=8),
                     hovermode="x unified",
                     hoverlabel=dict(bgcolor="#0d1420", bordercolor="#1a2840", font_color="#e8edf5"),
@@ -1897,22 +2042,18 @@ with tab4:
                 fpl = go.Figure()
                 fpl.add_trace(go.Bar(
                     x=hist_df["date"], y=hist_df["pl"],
-                    name="Kar/Zarar",
-                    marker_color=bar_colors,
+                    name="Kar/Zarar", marker_color=bar_colors,
                     hovertemplate="<b>%{x|%d %b %Y}</b><br>K/Z: $%{y:+,.2f}<extra></extra>"
                 ))
                 fpl.add_trace(go.Scatter(
                     x=hist_df["date"], y=hist_df["pl_pct"],
-                    name="K/Z %",
-                    line=dict(color="#f59e0b", width=2),
-                    mode="lines+markers",
-                    marker=dict(size=5),
-                    yaxis="y2",
+                    name="K/Z %", line=dict(color="#f59e0b", width=2),
+                    mode="lines+markers", marker=dict(size=5), yaxis="y2",
                     hovertemplate="<b>%{x|%d %b %Y}</b><br>K/Z: %{y:+.2f}%<extra></extra>"
                 ))
                 fpl.update_layout(
                     paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                    font=dict(color="#8899b0", family="Sora"),
+                    font=dict(color="#8899b0", family="Inter"),
                     height=300, margin=dict(l=8,r=8,t=20,b=8),
                     hovermode="x unified",
                     hoverlabel=dict(bgcolor="#0d1420", bordercolor="#1a2840", font_color="#e8edf5"),
@@ -1925,7 +2066,6 @@ with tab4:
                 )
                 st.plotly_chart(fpl, use_container_width=True)
 
-            # Dağılım pasta
             if len(rows) > 1:
                 st.markdown("### Dağılım")
                 pal=["#e02020","#3b82f6","#22c55e","#f59e0b","#8b5cf6","#06b6d4","#f472b6","#a3e635"]
@@ -2003,165 +2143,8 @@ with tab5:
             st.markdown("---")
             for m in fired: st.warning(f"🔔 {m}",icon="⚠️")
 
-# ── TAB 6: SERTİFİKALAR ───────────────────────────────────────────────────────
+# ── TAB 6: REGRESYON ──────────────────────────────────────────────────────────
 with tab6:
-    st.markdown("""
-    <div style='margin-bottom:24px'>
-      <div style='font-size:22px;font-weight:800;color:#e2e8f4;margin-bottom:6px'>🎓 Sertifikalarım</div>
-      <div style='color:#4a6080;font-size:13px;line-height:1.6'>Finans, yatırım ve teknoloji alanlarında kazanılan sertifikalar.</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # ── Tüm sertifikalar ──────────────────────────────────────────────────────
-    CERTS = [
-        {
-            "emoji": "📊",
-            "title": "Finansal Analiz ve Değerleme",
-            "issuer": "CFA Institute",
-            "date": "Mart 2024",
-            "id": "CFA-2024-TR-00481",
-            "tags": [("Finans", "red"), ("Değerleme", "blue")],
-            "desc": "Temel ve teknik analiz, DCF modelleme, hisse senedi değerleme yöntemleri.",
-            "color": "#3b82f6",
-            "url": "",
-        },
-        {
-            "emoji": "🤖",
-            "title": "AI & Machine Learning in Finance",
-            "issuer": "Coursera — Stanford University",
-            "date": "Ocak 2024",
-            "id": "COURSERA-ML-FIN-7843",
-            "tags": [("Yapay Zeka", "purple"), ("Python", "green")],
-            "desc": "Makine öğrenmesi ile fiyat tahmini, zaman serisi analizi ve portföy optimizasyonu.",
-            "color": "#a855f7",
-            "url": "",
-        },
-        {
-            "emoji": "📈",
-            "title": "Teknik Analiz Uzmanlığı",
-            "issuer": "CMT Association",
-            "date": "Kasım 2023",
-            "id": "CMT-2023-L1-TR-2291",
-            "tags": [("Teknik Analiz", "yellow"), ("Grafik", "red")],
-            "desc": "İndikatörler, destek-direnç seviyeleri, trend analizi ve işlem stratejileri.",
-            "color": "#f59e0b",
-            "url": "",
-        },
-        {
-            "emoji": "🪙",
-            "title": "Kripto Para ve Blockchain Temelleri",
-            "issuer": "Binance Academy",
-            "date": "Eylül 2023",
-            "id": "BA-CRYPTO-2023-4412",
-            "tags": [("Kripto", "yellow"), ("Blockchain", "blue")],
-            "desc": "DeFi, NFT, blockchain mimarisi ve kripto para piyasaları analizi.",
-            "color": "#f59e0b",
-            "url": "",
-        },
-        {
-            "emoji": "💼",
-            "title": "Portföy Yönetimi & Risk Analizi",
-            "issuer": "Bloomberg Market Concepts",
-            "date": "Haziran 2023",
-            "id": "BMC-PMR-2023-8821",
-            "tags": [("Portföy", "green"), ("Risk", "red")],
-            "desc": "Varlık dağılımı, risk metrikleri (VaR, Sharpe), çeşitlendirme stratejileri.",
-            "color": "#22c55e",
-            "url": "",
-        },
-        {
-            "emoji": "🐍",
-            "title": "Python ile Finansal Programlama",
-            "issuer": "DataCamp",
-            "date": "Nisan 2023",
-            "id": "DC-PYFIN-2023-3374",
-            "tags": [("Python", "green"), ("Veri Analizi", "blue")],
-            "desc": "Pandas, NumPy, yfinance ve Plotly ile finansal veri analizi ve görselleştirme.",
-            "color": "#10b981",
-            "url": "",
-        },
-    ]
-
-    tag_class = {"red": "", "blue": "tag-blue", "purple": "tag-purple", "yellow": "tag-yellow", "green": "tag-green"}
-
-    # ── Özet istatistikler ────────────────────────────────────────────────────
-    total_certs = len(CERTS)
-    issuers = list({c["issuer"].split("—")[0].strip() for c in CERTS})
-    years = sorted({c["date"].split()[-1] for c in CERTS}, reverse=True)
-
-    s1, s2, s3, s4 = st.columns(4)
-    s1.markdown(f"""<div class='cert-header-stat'>
-      <div class='val'>{total_certs}</div>
-      <div class='lbl'>Toplam Sertifika</div></div>""", unsafe_allow_html=True)
-    s2.markdown(f"""<div class='cert-header-stat'>
-      <div class='val'>{len(issuers)}</div>
-      <div class='lbl'>Kurum</div></div>""", unsafe_allow_html=True)
-    s3.markdown(f"""<div class='cert-header-stat'>
-      <div class='val'>{years[0] if years else '—'}</div>
-      <div class='lbl'>Son Yıl</div></div>""", unsafe_allow_html=True)
-    s4.markdown(f"""<div class='cert-header-stat'>
-      <div class='val'>🏆</div>
-      <div class='lbl'>Onaylı</div></div>""", unsafe_allow_html=True)
-
-    st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
-
-    # ── Filtre ────────────────────────────────────────────────────────────────
-    all_tags = sorted({tag for c in CERTS for tag, _ in c["tags"]})
-    selected_filter = st.selectbox(
-        "Kategori Filtrele",
-        ["Tümü"] + all_tags,
-        label_visibility="visible"
-    )
-
-    filtered = CERTS if selected_filter == "Tümü" else [
-        c for c in CERTS if any(t == selected_filter for t, _ in c["tags"])
-    ]
-
-    st.markdown(f"<div style='color:var(--muted);font-size:12px;margin-bottom:16px'>{len(filtered)} sertifika gösteriliyor</div>", unsafe_allow_html=True)
-
-    # ── Kartlar (3 sütun) ─────────────────────────────────────────────────────
-    cols_per_row = 3
-    for row_i in range(0, len(filtered), cols_per_row):
-        chunk = filtered[row_i:row_i + cols_per_row]
-        cols = st.columns(cols_per_row)
-        for ci, cert in enumerate(chunk):
-            tags_html = "".join(
-                f"<span class='cert-tag {tag_class.get(color, '')}'>#{tag}</span>"
-                for tag, color in cert["tags"]
-            )
-            verify_btn = ""
-            if cert.get("url"):
-                verify_btn = f"""<a class='cert-verify-btn' href='{cert['url']}' target='_blank'>🔗 Doğrula</a>"""
-            else:
-                verify_btn = "<span style='font-size:10px;color:var(--muted)'></span>"
-
-            with cols[ci]:
-                st.markdown(f"""
-                <div class="cert-card" style="--cert-color:{cert['color']}">
-                  <span class="cert-badge">{cert['emoji']}</span>
-                  <div class="cert-title">{cert['title']}</div>
-                  <div class="cert-issuer">{cert['issuer']}</div>
-                  <div class="cert-date">📅 {cert['date']}</div>
-                  <div style="color:var(--muted);font-size:12px;line-height:1.6;margin-bottom:10px">{cert['desc']}</div>
-                  <div style="margin-bottom:8px">{tags_html}</div>
-                  {verify_btn}
-                  <div class="cert-id">ID: {cert['id']}</div>
-                </div>
-                """, unsafe_allow_html=True)
-        st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
-
-    st.markdown("""
-    <div style='margin-top:24px;padding:16px 20px;background:var(--card);
-      border:1px solid var(--border);border-radius:var(--radius);
-      color:var(--muted);font-size:12px;line-height:1.8'>
-      💡 <b style='color:var(--text2)'>Sertifika Eklemek İçin:</b>
-      Geliştirici olarak <code>CERTS</code> listesine yeni bir sözlük ekleyebilirsiniz.
-      Her sertifika; başlık, kurum, tarih, etiketler, açıklama ve doğrulama URL'si içerir.
-    </div>
-    """, unsafe_allow_html=True)
-
-# ── TAB 7: REGRESYON ──────────────────────────────────────────────────────────
-with tab7:
     st.markdown("""
     <div style='margin-bottom:20px'>
       <div style='font-size:22px;font-weight:800;color:#e2e8f4;margin-bottom:6px'>📉 Regresyon Tabanlı Fiyat Tahmini</div>
@@ -2172,7 +2155,6 @@ with tab7:
     </div>
     """, unsafe_allow_html=True)
 
-    # ── Kontroller ────────────────────────────────────────────────────────────
     rc1, rc2, rc3 = st.columns([2, 1.2, 0.8])
     with rc1:
         rg_raw = st.text_input(
@@ -2184,15 +2166,12 @@ with tab7:
             st.caption(f"🇹🇷 → **{rg_ticker}**")
     with rc2:
         rg_period = st.selectbox(
-            "Eğitim Dönemi",
-            ["3mo", "6mo", "1y", "2y"],
-            index=1, key="rg_period"
+            "Eğitim Dönemi", ["3mo", "6mo", "1y", "2y"], index=1, key="rg_period"
         )
     with rc3:
         st.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
         rg_run = st.button("⚙️ Modeli Eğit", use_container_width=True, key="rg_run")
 
-    # Model seçimi
     st.markdown("<div style='color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1.2px;font-weight:600;margin:8px 0 6px'>Model Seçimi</div>", unsafe_allow_html=True)
     rg_model_cols = st.columns(len(REG_MODELS_DEF))
     rg_selected_keys = []
@@ -2208,14 +2187,6 @@ with tab7:
 
     show_proj = st.toggle("🔮 Gelecek projeksiyonunu göster (22 iş günü)", value=True, key="rg_proj")
 
-    # ── Eğitim & Tahmin ───────────────────────────────────────────────────────
-    if rg_run and rg_ticker and rg_selected_keys:
-        st.session_state["rg_results"] = None   # cache temizle
-        st.session_state["rg_ticker_last"] = rg_ticker
-        st.session_state["rg_period_last"] = rg_period
-        st.session_state["rg_keys_last"]   = tuple(rg_selected_keys)
-
-    # Sonuçları yükle (ilk açılışta ya da yeni eğitimde)
     if rg_run and rg_ticker and rg_selected_keys:
         with st.spinner("Modeller eğitiliyor… Bu birkaç saniye sürebilir."):
             rg_res = run_regression(rg_ticker, rg_period, tuple(rg_selected_keys))
@@ -2232,10 +2203,9 @@ with tab7:
         last_close = rg_res.get("_last_close", 0.0)
         last_date  = rg_res.get("_last_date")
 
-        # ── Model Performans Kartları ─────────────────────────────────────────
         st.markdown("---")
         st.markdown("### 📊 Model Performans Metrikleri")
-        st.markdown("<div style='color:var(--muted);font-size:12px;margin-bottom:12px'>%20 test seti üzerinde hesaplanmıştır. Daha yüksek R² ve daha düşük RMSE/MAPE daha iyi performansı gösterir.</div>", unsafe_allow_html=True)
+        st.markdown("<div style='color:var(--muted);font-size:12px;margin-bottom:12px'>%20 test seti üzerinde hesaplanmıştır.</div>", unsafe_allow_html=True)
 
         valid_keys = [k for k in rg_keys_used if k in rg_res and "metrics" in rg_res.get(k, {})]
         if valid_keys:
@@ -2244,13 +2214,9 @@ with tab7:
                 r     = rg_res[key]
                 m     = r["metrics"]
                 mdef  = next((x for x in REG_MODELS_DEF if x["key"] == key), {"name": key, "icon": "?", "color": "#fff"})
-                r2    = m["r2"]
-                rmse  = m["rmse"]
-                mape  = m["mape"]
-
+                r2    = m["r2"]; rmse = m["rmse"]; mape = m["mape"]
                 r2_cls   = "reg-metric-good" if r2 > 0.85 else ("reg-metric-mid" if r2 > 0.60 else "reg-metric-bad")
                 mape_cls = "reg-metric-good" if mape < 2  else ("reg-metric-mid" if mape < 5  else "reg-metric-bad")
-
                 with metric_cols[ci]:
                     st.markdown(f"""
                     <div class="reg-model-card" style="--reg-color:{mdef['color']}">
@@ -2268,7 +2234,6 @@ with tab7:
                     </div>
                     """, unsafe_allow_html=True)
 
-            # En iyi model rozeti
             best_key = max(valid_keys, key=lambda k: rg_res[k]["metrics"]["r2"])
             best_def = next((x for x in REG_MODELS_DEF if x["key"] == best_key), {"name": best_key, "icon": ""})
             st.markdown(
@@ -2278,19 +2243,11 @@ with tab7:
                 unsafe_allow_html=True
             )
 
-        # ── Grafik ────────────────────────────────────────────────────────────
         st.markdown("---")
         st.markdown("### 📈 Fiyat & Projeksiyon Grafiği")
-        st.markdown(
-            "<div style='color:var(--muted);font-size:11px;margin-bottom:8px'>"
-            "Kesik çizgi → model testi | Noktalı çizgi → 22 iş günü ileriye projeksiyon | "
-            "Dikey çizgi → eğitim/test ayrımı</div>",
-            unsafe_allow_html=True
-        )
         fig_reg = regression_chart(rg_res, valid_keys, show_future=show_proj)
         st.plotly_chart(fig_reg, use_container_width=True, config={"displayModeBar": True})
 
-        # ── Gelecek Tahmin Tablosu ─────────────────────────────────────────────
         if show_proj and valid_keys:
             st.markdown("---")
             st.markdown("### 🔮 Gelecek Fiyat Projeksiyon Tablosu")
@@ -2300,12 +2257,9 @@ with tab7:
                 f"Son veri: <span style='font-family:var(--mono);color:var(--text)'>{str(last_date)[:10]}</span></div>",
                 unsafe_allow_html=True
             )
-
             if last_date is not None:
-                fut_dates = list(pd.bdate_range(start=last_date, periods=23)[1:])  # 22 iş günü
+                fut_dates = list(pd.bdate_range(start=last_date, periods=23)[1:])
                 milestones = {0: "1 Gün", 4: "1 Hafta", 9: "2 Hafta", 21: "1 Ay"}
-
-                # Tablo başlığı
                 hdr_model_cells = "".join(
                     f"<th>{next((x['icon']+' '+x['name'] for x in REG_MODELS_DEF if x['key']==k), k)}</th>"
                     for k in valid_keys
@@ -2314,11 +2268,8 @@ with tab7:
                 <div style="overflow-x:auto">
                 <table class="reg-future-table">
                   <thead><tr>
-                    <th>Tarih</th>
-                    <th>Ufuk</th>
-                    {hdr_model_cells}
-                    <th>Ort. Tahmin</th>
-                    <th>Ort. Δ%</th>
+                    <th>Tarih</th><th>Ufuk</th>{hdr_model_cells}
+                    <th>Ort. Tahmin</th><th>Ort. Δ%</th>
                   </tr></thead><tbody>
                 """
                 for step_i, (fd, step_lbl) in enumerate(
@@ -2328,16 +2279,15 @@ with tab7:
                     model_vals = []
                     cells = ""
                     for key in valid_keys:
-                        fp = rg_res[key].get("future_preds", [])
-                        if step_idx < len(fp):
-                            val = fp[step_idx]
+                        fp_list = rg_res[key].get("future_preds", [])
+                        if step_idx < len(fp_list):
+                            val = fp_list[step_idx]
                             model_vals.append(val)
                             delta = (val - last_close) / last_close * 100 if last_close else 0
                             col = "#34d399" if delta >= 0 else "#f87171"
                             cells += f"<td style='color:{col}'>{val:.4f} <span style='font-size:10px'>({delta:+.2f}%)</span></td>"
                         else:
                             cells += "<td style='color:var(--muted)'>—</td>"
-
                     if model_vals:
                         avg_val = sum(model_vals) / len(model_vals)
                         avg_d   = (avg_val - last_close) / last_close * 100 if last_close else 0
@@ -2346,46 +2296,37 @@ with tab7:
                         avg_dcell = f"<td style='color:{avg_col};font-weight:700'>{avg_d:+.2f}%</td>"
                     else:
                         avg_cell = avg_dcell = "<td>—</td>"
-
                     bg = "background:var(--card2)" if step_i % 2 == 0 else ""
                     rows_html += f"""
                     <tr style='{bg}'>
                       <td style='font-family:var(--mono)'>{str(fd)[:10]}</td>
-                      <td><span style='background:rgba(192,57,43,0.12);color:#e87060;border:1px solid rgba(192,57,43,0.25);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700'>{step_lbl}</span></td>
+                      <td><span style='background:rgba(192,57,43,0.12);color:#e87060;border:1px solid rgba(192,57,43,0.25);
+                        border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700'>{step_lbl}</span></td>
                       {cells}{avg_cell}{avg_dcell}
                     </tr>"""
-
                 rows_html += "</tbody></table></div>"
                 st.markdown(rows_html, unsafe_allow_html=True)
 
-        # ── Model Açıklamaları ─────────────────────────────────────────────────
         with st.expander("ℹ️ Model ve Özellik Açıklamaları"):
             st.markdown("""
 | Model | Avantajı | Dezavantajı |
 |---|---|---|
 | **Doğrusal Regresyon** | Hızlı, yorumlanabilir | Yalnızca doğrusal ilişkileri yakalar |
-| **Polinom (2/3)** | Eğrili trendleri öğrenir | Aşırı uyum (overfitting) riski taşır |
+| **Polinom (2/3)** | Eğrili trendleri öğrenir | Aşırı uyum riski |
 | **Ridge** | Regularize, gürültüye dayanıklı | Hiperparametre gerektirir |
 | **SVR** | Küçük veri setlerinde güçlü | Büyük veri setinde yavaş |
-| **Random Forest** | Non-linear, sağlam ensemble | Yorumlanması zor, bellek yoğun |
-
-**Kullanılan özellikler:**
-- Geçmiş kapanış fiyatları (lag: 1, 2, 3, 5, 10)
-- Fiyat getirileri (1 günlük, 5 günlük)
-- RSI, MACD, EMA20, EMA50, ATR%, Stochastic K, CMF, OBV, Hacim Oranı
-- Cyclical zaman encoding (haftanın günü, ay)
+| **Random Forest** | Non-linear, sağlam ensemble | Yorumlanması zor |
 
 > ⚠️ Bu tahminler istatistiksel modellerle üretilmiş olup yatırım tavsiyesi değildir.
             """)
-
     elif not rg_res:
         st.markdown("""
         <div class="onboard-card">
           <span class="icon">📉</span>
           <h4>Regresyon Tahmini Nasıl Çalışır?</h4>
-          <p>Sol taraftan sembol ve eğitim dönemini seçin, kullanmak istediğiniz modelleri işaretleyin ve <b>Modeli Eğit</b> butonuna tıklayın.<br>
-          Modeller teknik indikatörler ve geçmiş fiyatları kullanarak eğitilir; ardından ileriye dönük projeksiyon üretilir.<br>
-          Sonuçlar grafik ve tablo olarak gösterilir. <b>Groq API gerektirmez.</b></p>
+          <p>Sembol ve eğitim dönemini seçin, modelleri işaretleyin ve <b>Modeli Eğit</b> butonuna tıklayın.<br>
+          Modeller teknik indikatörler ve geçmiş fiyatları kullanarak eğitilir; ardından projeksiyon üretilir.<br>
+          <b>Groq API gerektirmez.</b></p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -2399,4 +2340,4 @@ st.markdown("""
   Yatırım kararı vermeden önce lisanslı bir finansal danışmana başvurun.<br>
   <span style="color:#1e2d45;font-size:10px">© 2026 ARD Finans · Tüm hakları saklıdır</span>
 </div>
-""",unsafe_allow_html=True)
+""", unsafe_allow_html=True)
