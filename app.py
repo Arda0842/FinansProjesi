@@ -673,8 +673,8 @@ if not st.session_state.logged_in and not st.session_state.splash_done:
     @keyframes sLogo{from{opacity:0;transform:scale(.88) translateY(12px)}to{opacity:1;transform:none}}
     .s-ard{color:#e02020;text-shadow:0 0 40px rgba(224,32,32,.5)}
     .s-fin{color:#e8edf5}
-    .s-i{display:inline-flex;flex-direction:column;align-items:center;gap:3px;position:relative;top:2px}
-    .s-dot{width:clamp(7px,1.1vw,12px);height:clamp(7px,1.1vw,12px);background:#e8edf5;border-radius:50%}
+    .s-i{display:inline-flex;flex-direction:column;align-items:center;gap:2px;position:relative;top:2px;vertical-align:bottom}
+    .s-dot{width:clamp(6px,1vw,10px);height:clamp(6px,1vw,10px);background:#e8edf5;border-radius:50%}
     .splash-bar-wrap{margin-top:52px;width:clamp(140px,28vw,260px);height:2px;
       background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;
       opacity:0;animation:sShow .3s ease 1.1s forwards}
@@ -706,7 +706,7 @@ if not st.session_state.logged_in and not st.session_state.splash_done:
       </svg>
       <div class="splash-logo">
         <span class="s-ard">ARD</span>
-        <span class="s-fin">F<span class="s-i"><span class="s-dot"></span>İ</span>NANS</span>
+        <span class="s-fin">F<span class="s-i"><span class="s-dot"></span>I</span>NANS</span>
       </div>
       <div class="splash-bar-wrap"><div class="splash-bar"></div></div>
       <div class="splash-dots"><span></span><span></span><span></span></div>
@@ -735,8 +735,8 @@ if not st.session_state.logged_in:
       <div style="font-size:36px;font-weight:800;letter-spacing:-1px;margin-bottom:6px">
         <span style="color:#e02020">ARD</span>
         <span style="color:#e8edf5"> F<span style="display:inline-flex;flex-direction:column;
-          align-items:center;gap:1px;position:relative;top:1px;vertical-align:middle">
-          <span style="width:5px;height:5px;background:#e8edf5;border-radius:50%;display:block"></span>İ
+          align-items:center;gap:2px;position:relative;top:2px;vertical-align:bottom">
+          <span style="width:5px;height:5px;background:#e8edf5;border-radius:50%;display:block"></span>I
         </span>NANS</span>
       </div>
       <div style="color:#4a5a78;font-size:11px;letter-spacing:2px;text-transform:uppercase">
@@ -1510,7 +1510,10 @@ with st.sidebar:
     <div class="sb-logo">
       <div class="sb-logo-text">
         <span style="color:#c0392b">ARD</span>
-        <span style="color:#e2e8f4"> FİNANS</span>
+        <span style="color:#e2e8f4"> F<span style="display:inline-flex;flex-direction:column;
+          align-items:center;gap:1px;position:relative;top:2px;vertical-align:bottom">
+          <span style="width:4px;height:4px;background:#e2e8f4;border-radius:50%;display:block"></span>I
+        </span>NANS</span>
       </div>
       <div style="color:#4a6080;font-size:9px;letter-spacing:2.5px;text-transform:uppercase;margin-top:4px;font-weight:500">
         AI Trading Platform
