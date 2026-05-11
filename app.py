@@ -210,160 +210,47 @@ hr { border:none; border-top:1px solid var(--border); margin:14px 0; }
 /* ─── PRICE HEADER ─── */
 .price-header {
   background:linear-gradient(135deg,var(--card) 0%,var(--card2) 100%);
-  border:1px solid var(--border); border-radius:var(--radius-lg);
-  padding:20px 24px; margin-bottom:18px;
-  display:flex; flex-wrap:wrap; align-items:center; gap:20px;
-  box-shadow:var(--shadow-sm);
-}
-
-/* ─── STATUS BADGES ─── */
-.groq-badge {
-  display:inline-flex; align-items:center; gap:7px;
-  background:var(--card); border:1px solid var(--border);
-  border-radius:20px; padding:4px 14px;
-  font-size:11px; color:var(--text2); font-weight:500; margin-bottom:16px;
-}
-.groq-dot {
-  width:7px; height:7px; border-radius:50%; background:var(--green);
-  box-shadow:0 0 6px var(--green); animation:pulse-dot 2s infinite;
-}
-@keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.45} }
-
-/* ─── FOOTER ─── */
-.footer-bar {
-  margin-top:48px; padding:18px 24px;
-  background:var(--surface); border:1px solid var(--border);
-  border-radius:var(--radius-lg); text-align:center;
-  color:var(--muted); font-size:11px; line-height:1.8;
-}
-
-/* ─── SIDEBAR COMPONENTS ─── */
-.sb-logo { padding:22px 18px 16px; border-bottom:1px solid var(--border); margin-bottom:2px; }
-.sb-logo-text { font-size:20px; font-weight:800; letter-spacing:-0.8px; line-height:1; }
-.sb-user {
-  padding:12px 18px; display:flex; align-items:center; gap:11px;
-  border-bottom:1px solid var(--border); margin-bottom:6px;
-}
-.sb-avatar {
-  width:34px; height:34px; border-radius:50%;
-  background:linear-gradient(135deg,var(--accent),#922b21);
-  color:#fff; display:flex; align-items:center; justify-content:center;
-  font-size:14px; font-weight:700; flex-shrink:0;
-  box-shadow:0 2px 8px rgba(192,57,43,0.35);
-}
-.sb-section-title {
-  color:var(--muted); font-size:9px; text-transform:uppercase;
-  letter-spacing:2px; padding:10px 18px 5px; font-weight:700;
-}
-
-/* ─── PREDICTION CARDS ─── */
-.pred-card {
-  background:var(--card); border:1px solid var(--border);
-  border-radius:var(--radius-lg); padding:18px 16px;
-  transition:all 0.2s; height:100%;
-}
-.pred-card:hover { border-color:var(--border2); background:var(--card2); transform:translateY(-2px); box-shadow:var(--shadow); }
-.pred-model { font-size:12px; font-weight:700; margin-bottom:12px; color:var(--text); }
-.pred-price { font-family:var(--mono); font-size:17px; font-weight:700; }
-.pred-label { font-size:9px; text-transform:uppercase; letter-spacing:1.2px; color:var(--muted); margin-bottom:3px; font-weight:600; }
-.pred-signal-AL   { background:rgba(16,185,129,0.12); color:#34d399; border:1px solid rgba(16,185,129,0.3); border-radius:6px; padding:3px 12px; font-size:11px; font-weight:700; display:inline-block; }
-.pred-signal-SAT  { background:rgba(239,68,68,0.12); color:#f87171; border:1px solid rgba(239,68,68,0.3); border-radius:6px; padding:3px 12px; font-size:11px; font-weight:700; display:inline-block; }
-.pred-signal-NÖTR { background:rgba(100,116,139,0.12); color:#94a3b8; border:1px solid rgba(100,116,139,0.25); border-radius:6px; padding:3px 12px; font-size:11px; font-weight:700; display:inline-block; }
-
-/* ─── CONSENSUS BOX ─── */
-.consensus-box {
-  background:linear-gradient(135deg,var(--card) 0%,#111e32 100%);
-  border:1px solid var(--border2); border-radius:var(--radius-lg);
-  padding:24px 28px; margin-bottom:22px; box-shadow:var(--shadow-sm);
-  position:relative; overflow:hidden;
-}
-.consensus-box::before {
-  content:''; position:absolute; top:0; left:0; right:0; height:3px;
-  background:linear-gradient(90deg,var(--accent),var(--blue),var(--green));
-}
-
-/* ─── WALLET CARD ─── */
-.wallet-card {
-  background:linear-gradient(135deg,#0f1929 0%,#111e32 100%);
-  border:1px solid var(--border2); border-radius:var(--radius-lg);
-  padding:20px 22px; margin-top:16px; position:relative; overflow:hidden;
-}
-.wallet-card::before {
-  content:''; position:absolute; top:0; left:0; right:0; height:3px;
-  background:linear-gradient(90deg,var(--accent),var(--blue));
-}
-.wallet-id {
-  font-family:var(--mono); font-size:12px; color:var(--text2);
-  letter-spacing:1px; word-break:break-all;
-}
-
-/* ─── REGRESYON KARTI ─── */
-.reg-model-card {
-  background:var(--card); border:1px solid var(--border);
-  border-radius:var(--radius-lg); padding:18px 16px;
-  transition:all 0.2s; height:100%; position:relative; overflow:hidden;
-}
-.reg-model-card::before {
-  content:''; position:absolute; top:0; left:0; right:0; height:3px;
-  background:var(--reg-color, var(--accent));
-}
-.reg-model-card:hover { border-color:var(--border2); background:var(--card2); transform:translateY(-2px); box-shadow:var(--shadow); }
-.reg-metric-label { font-size:9px; text-transform:uppercase; letter-spacing:1.3px; color:var(--muted); font-weight:600; margin-bottom:3px; }
-.reg-metric-val   { font-family:var(--mono); font-size:16px; font-weight:700; color:var(--text); }
-.reg-metric-good  { color:#34d399; }
-.reg-metric-mid   { color:#fbbf24; }
-.reg-metric-bad   { color:#f87171; }
-.reg-future-table { width:100%; border-collapse:collapse; font-family:var(--mono); font-size:12px; }
-.reg-future-table th { color:var(--muted); font-size:9px; text-transform:uppercase; letter-spacing:1.2px; font-weight:600; padding:8px 10px; border-bottom:1px solid var(--border); text-align:left; }
-.reg-future-table td { padding:9px 10px; border-bottom:1px solid var(--border); color:var(--text); }
-.reg-future-table tr:hover td { background:var(--card2); }
-</style>
-""", unsafe_allow_html=True)
-
+  # ══════════════════════════════════════════════════════════════════════════════
+# SUPABASE VERİTABANI (POSTGRESQL)
 # ══════════════════════════════════════════════════════════════════════════════
-# YARDIMCI FONKSİYONLAR
-# ══════════════════════════════════════════════════════════════════════════════
+from sqlalchemy import create_engine, text
 
-def generate_wallet_id(username: str) -> str:
-    """Kullanıcıya özgü, tekrarlanamaz cüzdan ID üretir."""
-    namespace = uuid.UUID("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
-    uid = uuid.uuid5(namespace, username.lower().strip())
-    # ARD-XXXX-XXXX-XXXX formatı
-    h = uid.hex.upper()
-    return f"ARD-{h[0:4]}-{h[4:8]}-{h[8:12]}-{h[12:16]}"
+# Supabase bağlantısını başlat (Streamlit Cache ile hızlandırıldı)
+@st.cache_resource
+def get_db_engine():
+    db_url = st.secrets["SUPABASE_URL"]
+    if "?" not in db_url:
+        db_url += "?sslmode=require"
+    return create_engine(db_url)
 
-def generate_reset_code() -> str:
-    """6 haneli sayısal şifre sıfırlama kodu üretir."""
-    return "".join(random.choices(string.digits, k=6))
+engine = get_db_engine()
 
-# ══════════════════════════════════════════════════════════════════════════════
-# VERİTABANI (Google Sheets)
-# ══════════════════════════════════════════════════════════════════════════════
+# Eğer Supabase'de tablolar yoksa otomatik oluşturur
+def init_db():
+    with engine.connect() as conn:
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS ardfinans_users (
+                username TEXT PRIMARY KEY, email TEXT, password TEXT,
+                created_at TEXT, wallet_id TEXT, age TEXT, meslek TEXT,
+                portfoy_buyuklugu TEXT, reset_code TEXT
+            )
+        """))
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS portfolios (
+                id SERIAL PRIMARY KEY, username TEXT, ticker TEXT,
+                qty REAL, cost REAL, added TEXT, asset_type TEXT
+            )
+        """))
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS pf_history (
+                id SERIAL PRIMARY KEY, username TEXT, date TEXT,
+                total_value REAL, total_cost REAL
+            )
+        """))
+        conn.commit()
 
-def _get_sheet():
-    try:
-        raw = st.secrets["gcp_service_account"]
-        if isinstance(raw, str):
-            creds_dict = json.loads(raw)
-        else:
-            creds_dict = {k: v for k, v in raw.items()}
-            if "private_key" in creds_dict:
-                creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
-        scopes = ["https://www.googleapis.com/auth/spreadsheets",
-                  "https://www.googleapis.com/auth/drive"]
-        creds  = Credentials.from_service_account_info(creds_dict, scopes=scopes)
-        client = gspread.authorize(creds)
-        return client.open("ardfinans_users").sheet1
-    except Exception as e:
-        st.error(f"🔴 Veritabanı bağlantı hatası: {e}")
-        return None
-
-def _load_users():
-    sheet = _get_sheet()
-    if not sheet: return {}
-    try:
-        return {r["username"]: r for r in sheet.get_all_records() if r.get("username")}
-    except: return {}
+# Uygulama başlarken tabloları kontrol et
+init_db()
 
 def _hash(pw): return hashlib.sha256(pw.encode()).hexdigest()
 
@@ -379,6 +266,12 @@ PORTFOY_BUYUKLUKLERI = [
     "250.000 – 1.000.000 ₺", "1.000.000 ₺ üzeri"
 ]
 
+def _load_users():
+    try:
+        df = pd.read_sql("SELECT * FROM ardfinans_users", con=engine)
+        return {row["username"]: row.to_dict() for _, row in df.iterrows()}
+    except: return {}
+
 def register_user(username, email, password, age, meslek, portfoy_buyuklugu):
     u = username.strip().lower()
     if len(u) < 3: return False, "Kullanıcı adı en az 3 karakter olmalı."
@@ -386,23 +279,23 @@ def register_user(username, email, password, age, meslek, portfoy_buyuklugu):
     if len(password) < 6: return False, "Şifre en az 6 karakter olmalı."
     try:
         age_int = int(age)
-        if age_int < 18 or age_int > 100:
-            return False, "Yaş 18-100 arasında olmalıdır."
-    except:
-        return False, "Geçerli bir yaş girin."
+        if age_int < 18 or age_int > 100: return False, "Yaş 18-100 arasında olmalıdır."
+    except: return False, "Geçerli bir yaş girin."
+    
     db = _load_users()
     if u in db: return False, "Bu kullanıcı adı zaten alınmış."
     if any(v.get("email","").lower()==email.lower() for v in db.values()):
         return False, "Bu e-posta zaten kayıtlı."
-    sheet = _get_sheet()
-    if not sheet: return False, "Veritabanına bağlanılamadı."
+
     wallet_id = generate_wallet_id(u)
-    sheet.append_row([
-        u, email, _hash(password),
-        datetime.now().strftime("%Y-%m-%d %H:%M"),
-        wallet_id, str(age_int), meslek, portfoy_buyuklugu,
-        ""   # reset_code sütunu (boş başlar)
-    ])
+    new_user = pd.DataFrame([{
+        "username": u, "email": email, "password": _hash(password),
+        "created_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "wallet_id": wallet_id, "age": str(age_int),
+        "meslek": meslek, "portfoy_buyuklugu": portfoy_buyuklugu,
+        "reset_code": ""
+    }])
+    new_user.to_sql("ardfinans_users", con=engine, if_exists="append", index=False)
     return True, "Hesap oluşturuldu!", wallet_id
 
 def verify_login(username, password):
@@ -414,7 +307,6 @@ def verify_login(username, password):
     return True, db[u].get("email",""), wallet
 
 def get_user_by_email(email: str):
-    """E-posta ile kullanıcı kaydını döndür."""
     db = _load_users()
     for uname, rec in db.items():
         if rec.get("email","").lower() == email.lower():
@@ -422,63 +314,119 @@ def get_user_by_email(email: str):
     return None, None
 
 def save_reset_code(username: str, code: str):
-    """Kullanıcı satırına reset_code yaz."""
-    sheet = _get_sheet()
-    if not sheet: return False
     try:
-        records = sheet.get_all_records()
-        headers = sheet.row_values(1)
-        # reset_code sütun indeksini bul ya da oluştur
-        if "reset_code" not in headers:
-            col_idx = len(headers) + 1
-            sheet.update_cell(1, col_idx, "reset_code")
-        else:
-            col_idx = headers.index("reset_code") + 1
-        for i, r in enumerate(records):
-            if r.get("username") == username:
-                sheet.update_cell(i + 2, col_idx, code)
-                return True
-        return False
+        with engine.connect() as conn:
+            conn.execute(text("UPDATE ardfinans_users SET reset_code = :c WHERE username = :u"), {"c": code, "u": username})
+            conn.commit()
+        return True
     except: return False
 
 def verify_reset_code(username: str, code: str) -> bool:
-    """Sheets'teki reset_code ile girilen kodu karşılaştır."""
     db = _load_users()
     rec = db.get(username)
     if not rec: return False
     return str(rec.get("reset_code","")).strip() == code.strip()
 
 def update_password(username: str, new_password: str):
-    """Şifreyi güncelle ve reset_code'u temizle."""
-    sheet = _get_sheet()
-    if not sheet: return False
     try:
-        records = sheet.get_all_records()
-        headers = sheet.row_values(1)
-        pw_col     = headers.index("password")     + 1 if "password"     in headers else None
-        reset_col  = headers.index("reset_code")   + 1 if "reset_code"   in headers else None
-        for i, r in enumerate(records):
-            if r.get("username") == username:
-                if pw_col:
-                    sheet.update_cell(i + 2, pw_col, _hash(new_password))
-                if reset_col:
-                    sheet.update_cell(i + 2, reset_col, "")
-                return True
-        return False
+        with engine.connect() as conn:
+            conn.execute(text("UPDATE ardfinans_users SET password = :p, reset_code = '' WHERE username = :u"), 
+                         {"p": _hash(new_password), "u": username})
+            conn.commit()
+        return True
     except: return False
 
 def send_reset_email(to: str, username: str, code: str) -> tuple:
-    """Şifre sıfırlama kodunu e-posta ile gönder."""
     try:
         sender = st.secrets["EMAIL_SENDER"]
         pwd    = st.secrets["EMAIL_PASSWORD"]
     except:
         return False, "E-posta ayarları eksik."
     html = f"""
-    <div style="font-family:sans-serif;max-width:480px;margin:0 auto;
-      background:#070b14;border:1px solid #1a2840;border-radius:14px;overflow:hidden">
+    <div style="font-family:sans-serif;max-width:480px;margin:0 auto;background:#070b14;border:1px solid #1a2840;border-radius:14px;overflow:hidden">
       <div style="background:#0d1420;padding:20px;text-align:center">
-        <b style="font-size:22px">
+        <b style="font-size:22px"><span style="color:#e02020">ARD</span><span style="color:#e8edf5"> FİNANS</span></b>
+        <div style="color:#4a5a78;font-size:10px;letter-spacing:2px;margin-top:3px">ŞİFRE SIFIRLAMA</div>
+      </div>
+      <div style="padding:28px 24px">
+        <p style="color:#8899b0;font-size:14px;margin:0 0 16px">Merhaba <b style="color:#e8edf5">{username}</b>,</p>
+        <p style="color:#8899b0;font-size:13px;margin:0 0 20px">Şifre sıfırlama talebiniz alındı. Aşağıdaki kodu kullanın:</p>
+        <div style="background:#111c2e;border:1px solid #1a2840;border-radius:10px;padding:20px;text-align:center;margin-bottom:20px">
+          <div style="font-family:monospace;font-size:36px;font-weight:800;letter-spacing:10px;color:#e02020;text-shadow:0 0 20px rgba(224,32,32,0.4)">{code}</div>
+          <div style="color:#4a5a78;font-size:11px;margin-top:8px">Bu kod 15 dakika geçerlidir.</div>
+        </div>
+      </div>
+    </div>"""
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = "🔐 ARD Finans — Şifre Sıfırlama Kodu"
+        msg["From"]    = sender
+        msg["To"]      = to
+        msg.attach(MIMEText(html, "html", "utf-8"))
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as s:
+            s.login(sender, pwd)
+            s.sendmail(sender, to, msg.as_string())
+        return True, "Gönderildi"
+    except Exception as e: return False, str(e)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PORTFÖY VERİTABANI (Supabase)
+# ══════════════════════════════════════════════════════════════════════════════
+ASSET_TYPES = ["📈 Hisse", "🪙 Kripto", "📊 ETF/Fon", "💱 Döviz"]
+
+def load_portfolio(username):
+    try:
+        query = text("SELECT * FROM portfolios WHERE username = :u")
+        with engine.connect() as conn:
+            df = pd.read_sql(query, con=conn, params={"u": username})
+        return [{"t": r["ticker"], "q": float(r["qty"]), "c": float(r["cost"]), "type": r.get("asset_type", "📈 Hisse")} for _, r in df.iterrows()]
+    except: return []
+
+def save_portfolio_item(username, ticker, qty, cost, asset_type="📈 Hisse"):
+    try:
+        new_item = pd.DataFrame([{
+            "username": username, "ticker": ticker, "qty": qty, "cost": cost,
+            "added": datetime.now().strftime("%Y-%m-%d %H:%M"), "asset_type": asset_type
+        }])
+        new_item.to_sql("portfolios", con=engine, if_exists="append", index=False)
+        return True
+    except: return False
+
+def delete_portfolio_item(username, ticker):
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("DELETE FROM portfolios WHERE username = :u AND ticker = :t"), {"u": username, "t": ticker})
+            conn.commit()
+        return True
+    except: return False
+
+def save_portfolio_snapshot(username, total_value, total_cost):
+    try:
+        today = datetime.now().strftime("%Y-%m-%d")
+        with engine.connect() as conn:
+            res = conn.execute(text("SELECT id FROM pf_history WHERE username = :u AND date = :d"), {"u": username, "d": today}).fetchone()
+            if res: return # Bugüne ait kayıt zaten var
+            
+        new_hist = pd.DataFrame([{
+            "username": username, "date": today,
+            "total_value": round(total_value, 2), "total_cost": round(total_cost, 2)
+        }])
+        new_hist.to_sql("pf_history", con=engine, if_exists="append", index=False)
+    except: pass
+
+def load_portfolio_history(username):
+    try:
+        query = text("SELECT date, total_value, total_cost FROM pf_history WHERE username = :u")
+        with engine.connect() as conn:
+            df = pd.read_sql(query, con=conn, params={"u": username})
+        if df.empty: return pd.DataFrame()
+        df["date"] = pd.to_datetime(df["date"])
+        df = df.sort_values("date").drop_duplicates(subset="date")
+        df["pl"] = df["total_value"] - df["total_cost"]
+        df["pl_pct"] = (df["pl"] / df["total_cost"] * 100).round(2)
+        return df
+    except: return pd.DataFrame()
           <span style="color:#e02020">ARD</span>
           <span style="color:#e8edf5"> FİNANS</span>
         </b>
