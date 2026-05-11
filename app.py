@@ -6,10 +6,10 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from groq import Groq
 from datetime import datetime
-import smtplib, hashlib, json, re, gspread, uuid, random, string
+import smtplib, hashlib, json, re, uuid, random, string
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from google.oauth2.service_account import Credentials
+from sqlalchemy import create_engine, text
 
 # ══════════════════════════════════════════════════════════════════════════════
 # SAYFA AYARI
@@ -210,10 +210,135 @@ hr { border:none; border-top:1px solid var(--border); margin:14px 0; }
 /* ─── PRICE HEADER ─── */
 .price-header {
   background:linear-gradient(135deg,var(--card) 0%,var(--card2) 100%);
-  # ══════════════════════════════════════════════════════════════════════════════
+  border:1px solid var(--border); border-radius:var(--radius-lg);
+  padding:20px 24px; margin-bottom:18px;
+  display:flex; flex-wrap:wrap; align-items:center; gap:20px;
+  box-shadow:var(--shadow-sm);
+}
+
+/* ─── STATUS BADGES ─── */
+.groq-badge {
+  display:inline-flex; align-items:center; gap:7px;
+  background:var(--card); border:1px solid var(--border);
+  border-radius:20px; padding:4px 14px;
+  font-size:11px; color:var(--text2); font-weight:500; margin-bottom:16px;
+}
+.groq-dot {
+  width:7px; height:7px; border-radius:50%; background:var(--green);
+  box-shadow:0 0 6px var(--green); animation:pulse-dot 2s infinite;
+}
+@keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.45} }
+
+/* ─── FOOTER ─── */
+.footer-bar {
+  margin-top:48px; padding:18px 24px;
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius-lg); text-align:center;
+  color:var(--muted); font-size:11px; line-height:1.8;
+}
+
+/* ─── SIDEBAR COMPONENTS ─── */
+.sb-logo { padding:22px 18px 16px; border-bottom:1px solid var(--border); margin-bottom:2px; }
+.sb-logo-text { font-size:20px; font-weight:800; letter-spacing:-0.8px; line-height:1; }
+.sb-user {
+  padding:12px 18px; display:flex; align-items:center; gap:11px;
+  border-bottom:1px solid var(--border); margin-bottom:6px;
+}
+.sb-avatar {
+  width:34px; height:34px; border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),#922b21);
+  color:#fff; display:flex; align-items:center; justify-content:center;
+  font-size:14px; font-weight:700; flex-shrink:0;
+  box-shadow:0 2px 8px rgba(192,57,43,0.35);
+}
+.sb-section-title {
+  color:var(--muted); font-size:9px; text-transform:uppercase;
+  letter-spacing:2px; padding:10px 18px 5px; font-weight:700;
+}
+
+/* ─── PREDICTION CARDS ─── */
+.pred-card {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:var(--radius-lg); padding:18px 16px;
+  transition:all 0.2s; height:100%;
+}
+.pred-card:hover { border-color:var(--border2); background:var(--card2); transform:translateY(-2px); box-shadow:var(--shadow); }
+.pred-model { font-size:12px; font-weight:700; margin-bottom:12px; color:var(--text); }
+.pred-price { font-family:var(--mono); font-size:17px; font-weight:700; }
+.pred-label { font-size:9px; text-transform:uppercase; letter-spacing:1.2px; color:var(--muted); margin-bottom:3px; font-weight:600; }
+.pred-signal-AL   { background:rgba(16,185,129,0.12); color:#34d399; border:1px solid rgba(16,185,129,0.3); border-radius:6px; padding:3px 12px; font-size:11px; font-weight:700; display:inline-block; }
+.pred-signal-SAT  { background:rgba(239,68,68,0.12); color:#f87171; border:1px solid rgba(239,68,68,0.3); border-radius:6px; padding:3px 12px; font-size:11px; font-weight:700; display:inline-block; }
+.pred-signal-NÖTR { background:rgba(100,116,139,0.12); color:#94a3b8; border:1px solid rgba(100,116,139,0.25); border-radius:6px; padding:3px 12px; font-size:11px; font-weight:700; display:inline-block; }
+
+/* ─── CONSENSUS BOX ─── */
+.consensus-box {
+  background:linear-gradient(135deg,var(--card) 0%,#111e32 100%);
+  border:1px solid var(--border2); border-radius:var(--radius-lg);
+  padding:24px 28px; margin-bottom:22px; box-shadow:var(--shadow-sm);
+  position:relative; overflow:hidden;
+}
+.consensus-box::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:3px;
+  background:linear-gradient(90deg,var(--accent),var(--blue),var(--green));
+}
+
+/* ─── WALLET CARD ─── */
+.wallet-card {
+  background:linear-gradient(135deg,#0f1929 0%,#111e32 100%);
+  border:1px solid var(--border2); border-radius:var(--radius-lg);
+  padding:20px 22px; margin-top:16px; position:relative; overflow:hidden;
+}
+.wallet-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:3px;
+  background:linear-gradient(90deg,var(--accent),var(--blue));
+}
+.wallet-id {
+  font-family:var(--mono); font-size:12px; color:var(--text2);
+  letter-spacing:1px; word-break:break-all;
+}
+
+/* ─── REGRESYON KARTI ─── */
+.reg-model-card {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:var(--radius-lg); padding:18px 16px;
+  transition:all 0.2s; height:100%; position:relative; overflow:hidden;
+}
+.reg-model-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:3px;
+  background:var(--reg-color, var(--accent));
+}
+.reg-model-card:hover { border-color:var(--border2); background:var(--card2); transform:translateY(-2px); box-shadow:var(--shadow); }
+.reg-metric-label { font-size:9px; text-transform:uppercase; letter-spacing:1.3px; color:var(--muted); font-weight:600; margin-bottom:3px; }
+.reg-metric-val   { font-family:var(--mono); font-size:16px; font-weight:700; color:var(--text); }
+.reg-metric-good  { color:#34d399; }
+.reg-metric-mid   { color:#fbbf24; }
+.reg-metric-bad   { color:#f87171; }
+.reg-future-table { width:100%; border-collapse:collapse; font-family:var(--mono); font-size:12px; }
+.reg-future-table th { color:var(--muted); font-size:9px; text-transform:uppercase; letter-spacing:1.2px; font-weight:600; padding:8px 10px; border-bottom:1px solid var(--border); text-align:left; }
+.reg-future-table td { padding:9px 10px; border-bottom:1px solid var(--border); color:var(--text); }
+.reg-future-table tr:hover td { background:var(--card2); }
+</style>
+""", unsafe_allow_html=True)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# YARDIMCI FONKSİYONLAR
+# ══════════════════════════════════════════════════════════════════════════════
+
+def generate_wallet_id(username: str) -> str:
+    """Kullanıcıya özgü, tekrarlanamaz cüzdan ID üretir."""
+    namespace = uuid.UUID("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
+    uid = uuid.uuid5(namespace, username.lower().strip())
+    # ARD-XXXX-XXXX-XXXX formatı
+    h = uid.hex.upper()
+    return f"ARD-{h[0:4]}-{h[4:8]}-{h[8:12]}-{h[12:16]}"
+
+def generate_reset_code() -> str:
+    """6 haneli sayısal şifre sıfırlama kodu üretir."""
+    return "".join(random.choices(string.digits, k=6))
+
+# ══════════════════════════════════════════════════════════════════════════════
 # SUPABASE VERİTABANI (POSTGRESQL)
 # ══════════════════════════════════════════════════════════════════════════════
-from sqlalchemy import create_engine, text
 
 # Supabase bağlantısını başlat (Streamlit Cache ile hızlandırıldı)
 @st.cache_resource
@@ -421,159 +546,6 @@ def load_portfolio_history(username):
         with engine.connect() as conn:
             df = pd.read_sql(query, con=conn, params={"u": username})
         if df.empty: return pd.DataFrame()
-        df["date"] = pd.to_datetime(df["date"])
-        df = df.sort_values("date").drop_duplicates(subset="date")
-        df["pl"] = df["total_value"] - df["total_cost"]
-        df["pl_pct"] = (df["pl"] / df["total_cost"] * 100).round(2)
-        return df
-    except: return pd.DataFrame()
-          <span style="color:#e02020">ARD</span>
-          <span style="color:#e8edf5"> FİNANS</span>
-        </b>
-        <div style="color:#4a5a78;font-size:10px;letter-spacing:2px;margin-top:3px">
-          ŞİFRE SIFIRLAMA
-        </div>
-      </div>
-      <div style="padding:28px 24px">
-        <p style="color:#8899b0;font-size:14px;margin:0 0 16px">
-          Merhaba <b style="color:#e8edf5">{username}</b>,
-        </p>
-        <p style="color:#8899b0;font-size:13px;margin:0 0 20px">
-          Şifre sıfırlama talebiniz alındı. Aşağıdaki kodu kullanın:
-        </p>
-        <div style="background:#111c2e;border:1px solid #1a2840;border-radius:10px;
-          padding:20px;text-align:center;margin-bottom:20px">
-          <div style="font-family:monospace;font-size:36px;font-weight:800;
-            letter-spacing:10px;color:#e02020;text-shadow:0 0 20px rgba(224,32,32,0.4)">
-            {code}
-          </div>
-          <div style="color:#4a5a78;font-size:11px;margin-top:8px">
-            Bu kod 15 dakika geçerlidir.
-          </div>
-        </div>
-        <p style="color:#2a3a52;font-size:11px">
-          Bu isteği siz yapmadıysanız bu e-postayı görmezden gelin.<br>
-          © 2026 ARD Finans
-        </p>
-      </div>
-    </div>"""
-    try:
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = "🔐 ARD Finans — Şifre Sıfırlama Kodu"
-        msg["From"]    = sender
-        msg["To"]      = to
-        msg.attach(MIMEText(html, "html", "utf-8"))
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as s:
-            s.login(sender, pwd)
-            s.sendmail(sender, to, msg.as_string())
-        return True, "Gönderildi"
-    except Exception as e:
-        return False, str(e)
-
-# ══════════════════════════════════════════════════════════════════════════════
-# PORTFÖY VERİTABANI (Google Sheets — 2. sayfa)
-# ══════════════════════════════════════════════════════════════════════════════
-
-def _get_portfolio_sheet():
-    try:
-        raw = st.secrets["gcp_service_account"]
-        if isinstance(raw, str):
-            creds_dict = json.loads(raw)
-        else:
-            creds_dict = {k: v for k, v in raw.items()}
-            if "private_key" in creds_dict:
-                creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
-        scopes = ["https://www.googleapis.com/auth/spreadsheets",
-                  "https://www.googleapis.com/auth/drive"]
-        creds  = Credentials.from_service_account_info(creds_dict, scopes=scopes)
-        client = gspread.authorize(creds)
-        wb     = client.open("ardfinans_users")
-        try:
-            sheet = wb.worksheet("portfolios")
-        except:
-            sheet = wb.add_worksheet("portfolios", rows=1000, cols=6)
-            sheet.append_row(["username","ticker","qty","cost","added","asset_type"])
-        return sheet
-    except Exception as e:
-        return None
-
-def _get_history_sheet():
-    try:
-        raw = st.secrets["gcp_service_account"]
-        if isinstance(raw, str):
-            creds_dict = json.loads(raw)
-        else:
-            creds_dict = {k: v for k, v in raw.items()}
-            if "private_key" in creds_dict:
-                creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
-        scopes = ["https://www.googleapis.com/auth/spreadsheets",
-                  "https://www.googleapis.com/auth/drive"]
-        creds  = Credentials.from_service_account_info(creds_dict, scopes=scopes)
-        client = gspread.authorize(creds)
-        wb     = client.open("ardfinans_users")
-        try:
-            sheet = wb.worksheet("pf_history")
-        except:
-            sheet = wb.add_worksheet("pf_history", rows=5000, cols=4)
-            sheet.append_row(["username","date","total_value","total_cost"])
-        return sheet
-    except:
-        return None
-
-ASSET_TYPES = ["📈 Hisse", "🪙 Kripto", "📊 ETF/Fon", "💱 Döviz"]
-
-def load_portfolio(username):
-    sheet = _get_portfolio_sheet()
-    if not sheet: return []
-    try:
-        records = sheet.get_all_records()
-        return [{"t": r["ticker"], "q": float(r["qty"]),
-                 "c": float(r["cost"]),
-                 "type": r.get("asset_type", "📈 Hisse")} for r in records
-                if r.get("username") == username and r.get("ticker")]
-    except: return []
-
-def save_portfolio_item(username, ticker, qty, cost, asset_type="📈 Hisse"):
-    sheet = _get_portfolio_sheet()
-    if not sheet: return False
-    try:
-        sheet.append_row([username, ticker, qty, cost,
-                          datetime.now().strftime("%Y-%m-%d %H:%M"), asset_type])
-        return True
-    except: return False
-
-def delete_portfolio_item(username, ticker):
-    sheet = _get_portfolio_sheet()
-    if not sheet: return False
-    try:
-        records = sheet.get_all_records()
-        for i, r in enumerate(records):
-            if r.get("username") == username and r.get("ticker") == ticker:
-                sheet.delete_rows(i + 2)
-                return True
-        return False
-    except: return False
-
-def save_portfolio_snapshot(username, total_value, total_cost):
-    sheet = _get_history_sheet()
-    if not sheet: return
-    try:
-        today = datetime.now().strftime("%Y-%m-%d")
-        records = sheet.get_all_records()
-        for r in records:
-            if r.get("username") == username and r.get("date") == today:
-                return
-        sheet.append_row([username, today, round(total_value, 2), round(total_cost, 2)])
-    except: pass
-
-def load_portfolio_history(username):
-    sheet = _get_history_sheet()
-    if not sheet: return pd.DataFrame()
-    try:
-        records = sheet.get_all_records()
-        data = [r for r in records if r.get("username") == username]
-        if not data: return pd.DataFrame()
-        df = pd.DataFrame(data)[["date","total_value","total_cost"]]
         df["date"] = pd.to_datetime(df["date"])
         df = df.sort_values("date").drop_duplicates(subset="date")
         df["pl"] = df["total_value"] - df["total_cost"]
@@ -871,7 +843,7 @@ if not st.session_state.logged_in:
     """, unsafe_allow_html=True)
     st.stop()
 
-# Giriş yapıldıktan sonra portföyü Sheets'ten yükle (bir kez)
+# Giriş yapıldıktan sonra portföyü veritabanından yükle (bir kez)
 if st.session_state.logged_in and not st.session_state.pf_loaded:
     with st.spinner("Portföy yükleniyor..."):
         st.session_state.portfolio = load_portfolio(st.session_state.username)
@@ -1468,7 +1440,7 @@ with st.sidebar:
       </div>
     </div>
     <div class="sb-user">
-      <div class="sb-avatar">{st.session_state.username[0].upper()}</div>
+      <div class="sb-avatar">{st.session_state.username[0].upper() if st.session_state.username else 'U'}</div>
       <div>
         <div style="font-size:13px;font-weight:600;color:#e2e8f4">{st.session_state.username}</div>
         <div style="font-size:10px;color:#4a6080;display:flex;align-items:center;gap:5px;margin-top:2px">
@@ -1534,7 +1506,7 @@ with st.sidebar:
             st.success("✓ Alarm kuruldu")
 
 # ══════════════════════════════════════════════════════════════════════════════
-# ANA İÇERİK  (Sertifikalar sekmesi kaldırıldı → 6 sekme)
+# ANA İÇERİK
 # ══════════════════════════════════════════════════════════════════════════════
 tab1,tab2,tab3,tab4,tab5,tab6 = st.tabs([
     "📈 Grafik & Sinyaller",
