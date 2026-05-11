@@ -351,28 +351,33 @@ def get_db_engine():
 engine = get_db_engine()
 
 # Eğer Supabase'de tablolar yoksa otomatik oluşturur
+# Eğer Supabase'de tablolar yoksa otomatik oluşturur
 def init_db():
-    with engine.connect() as conn:
-        conn.execute(text("""
-            CREATE TABLE IF NOT EXISTS ardfinans_users (
-                username TEXT PRIMARY KEY, email TEXT, password TEXT,
-                created_at TEXT, wallet_id TEXT, age TEXT, meslek TEXT,
-                portfoy_buyuklugu TEXT, reset_code TEXT
-            )
-        """))
-        conn.execute(text("""
-            CREATE TABLE IF NOT EXISTS portfolios (
-                id SERIAL PRIMARY KEY, username TEXT, ticker TEXT,
-                qty REAL, cost REAL, added TEXT, asset_type TEXT
-            )
-        """))
-        conn.execute(text("""
-            CREATE TABLE IF NOT EXISTS pf_history (
-                id SERIAL PRIMARY KEY, username TEXT, date TEXT,
-                total_value REAL, total_cost REAL
-            )
-        """))
-        conn.commit()
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS ardfinans_users (
+                    username TEXT PRIMARY KEY, email TEXT, password TEXT,
+                    created_at TEXT, wallet_id TEXT, age TEXT, meslek TEXT,
+                    portfoy_buyuklugu TEXT, reset_code TEXT
+                )
+            """))
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS portfolios (
+                    id SERIAL PRIMARY KEY, username TEXT, ticker TEXT,
+                    qty REAL, cost REAL, added TEXT, asset_type TEXT
+                )
+            """))
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS pf_history (
+                    id SERIAL PRIMARY KEY, username TEXT, date TEXT,
+                    total_value REAL, total_cost REAL
+                )
+            """))
+            conn.commit()
+    except Exception as e:
+        st.error(f"🚨 SUPABASE BAĞLANTI HATASI: {e}")
+        st.stop()
 
 # Uygulama başlarken tabloları kontrol et
 init_db()
